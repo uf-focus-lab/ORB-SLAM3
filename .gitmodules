@@ -1,0 +1,12 @@
+[submodule "thirdparty/DBoW2"]
+	path = thirdparty/DBoW2
+	url = https://github.com/dorian3d/DBoW2.git
+	branch = master
+[submodule "thirdparty/g2o"]
+	path = thirdparty/g2o
+	url = https://github.com/RainerKuemmerle/g2o.git
+	branch = master
+[submodule "thirdparty/Sophus"]
+	path = thirdparty/Sophus
+	url = https://github.com/strasdat/Sophus.git
+	branch = main
