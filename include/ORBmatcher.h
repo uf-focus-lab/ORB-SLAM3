@@ -18,8 +18,6 @@
 #ifndef ORBMATCHER_H
 #define ORBMATCHER_H
 
-using namespace std;
-
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -29,6 +27,7 @@ using namespace std;
 #include "KeyFrame.h"
 #include "Frame.h"
 
+using namespace std;
 
 namespace ORB_SLAM3
 {

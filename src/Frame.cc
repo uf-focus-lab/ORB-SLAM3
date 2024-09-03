@@ -19,8 +19,6 @@
  * ORB-SLAM3. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
-
 #include "Frame.h"
 
 #include <thread>
@@ -35,6 +33,8 @@ using namespace std;
 
 #include "CameraModels/KannalaBrandt8.h"
 #include "CameraModels/Pinhole.h"
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 

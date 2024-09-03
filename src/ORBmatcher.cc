@@ -16,8 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-using namespace std;
-
 
 #include "ORBmatcher.h"
 
@@ -27,7 +25,7 @@ using namespace std;
 
 #include <DBoW2/FeatureVector.h>
 
-#include <stdint-gcc.h>
+#include <cstdint>
 
 using namespace std;
 

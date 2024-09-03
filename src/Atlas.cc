@@ -16,14 +16,14 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-using namespace std;
-
 #include "Atlas.h"
 #include "Viewer.h"
 
 #include "GeometricCamera.h"
 #include "CameraModels/Pinhole.h"
 #include "KannalaBrandt8.h"
+
+using namespace std;
 
 namespace ORB_SLAM3
 {

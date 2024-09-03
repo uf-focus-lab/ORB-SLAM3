@@ -18,8 +18,6 @@
 #ifndef ATLAS_H
 #define ATLAS_H
 
-using namespace std;
-
 #include "Map.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -32,6 +30,7 @@ using namespace std;
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/export.hpp>
 
+using namespace std;
 
 namespace ORB_SLAM3
 {

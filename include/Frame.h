@@ -18,8 +18,6 @@
 #ifndef FRAME_H
 #define FRAME_H
 
-using namespace std;
-
 #include <vector>
 
 #include <DBoW2/BowVector.h>
@@ -38,6 +36,8 @@ using namespace std;
 
 #include "Eigen/Core"
 #include <sophus/se3.hpp>
+
+using namespace std;
 
 namespace ORB_SLAM3
 {
