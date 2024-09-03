@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "G2oTypes.h"
 #include "ImuTypes.h"
 #include "Converter.h"
@@ -145,8 +147,8 @@ ImuCamPose::ImuCamPose(Eigen::Matrix3d &_Rwc, Eigen::Vector3d &_twc, KeyFrame* p
     DR.setIdentity();
 }
 
-void ImuCamPose::SetParam(const std::vector<Eigen::Matrix3d> &_Rcw, const std::vector<Eigen::Vector3d> &_tcw, const std::vector<Eigen::Matrix3d> &_Rbc,
-              const std::vector<Eigen::Vector3d> &_tbc, const double &_bf)
+void ImuCamPose::SetParam(const vector<Eigen::Matrix3d> &_Rcw, const vector<Eigen::Vector3d> &_tcw, const vector<Eigen::Matrix3d> &_Rbc,
+              const vector<Eigen::Vector3d> &_tbc, const double &_bf)
 {
     Rbc = _Rbc;
     tbc = _tbc;
@@ -266,12 +268,12 @@ void InvDepthPoint::Update(const double *pu)
 }
 
 
-bool VertexPose::read(std::istream& is)
+bool VertexPose::read(istream& is)
 {
-    std::vector<Eigen::Matrix<double,3,3> > Rcw;
-    std::vector<Eigen::Matrix<double,3,1> > tcw;
-    std::vector<Eigen::Matrix<double,3,3> > Rbc;
-    std::vector<Eigen::Matrix<double,3,1> > tbc;
+    vector<Eigen::Matrix<double,3,3> > Rcw;
+    vector<Eigen::Matrix<double,3,1> > tcw;
+    vector<Eigen::Matrix<double,3,3> > Rbc;
+    vector<Eigen::Matrix<double,3,1> > tbc;
 
     const int num_cams = _estimate.Rbc.size();
     for(int idx = 0; idx<num_cams; idx++)
@@ -307,13 +309,13 @@ bool VertexPose::read(std::istream& is)
     return true;
 }
 
-bool VertexPose::write(std::ostream& os) const
+bool VertexPose::write(ostream& os) const
 {
-    std::vector<Eigen::Matrix<double,3,3> > Rcw = _estimate.Rcw;
-    std::vector<Eigen::Matrix<double,3,1> > tcw = _estimate.tcw;
+    vector<Eigen::Matrix<double,3,3> > Rcw = _estimate.Rcw;
+    vector<Eigen::Matrix<double,3,1> > tcw = _estimate.tcw;
 
-    std::vector<Eigen::Matrix<double,3,3> > Rbc = _estimate.Rbc;
-    std::vector<Eigen::Matrix<double,3,1> > tbc = _estimate.tbc;
+    vector<Eigen::Matrix<double,3,3> > Rbc = _estimate.Rbc;
+    vector<Eigen::Matrix<double,3,1> > tbc = _estimate.tbc;
 
     const int num_cams = tcw.size();
 
@@ -349,7 +351,7 @@ bool VertexPose::write(std::ostream& os) const
 void EdgeMono::linearizeOplus()
 {
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
-    const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
+    const g2o::VertexPointXYZ* VPoint = static_cast<const g2o::VertexPointXYZ*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
     const Eigen::Vector3d &tcw = VPose->estimate().tcw[cam_idx];
@@ -397,7 +399,7 @@ void EdgeMonoOnlyPose::linearizeOplus()
 void EdgeStereo::linearizeOplus()
 {
     const VertexPose* VPose = static_cast<const VertexPose*>(_vertices[1]);
-    const g2o::VertexSBAPointXYZ* VPoint = static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
+    const g2o::VertexPointXYZ* VPoint = static_cast<const g2o::VertexPointXYZ*>(_vertices[0]);
 
     const Eigen::Matrix3d &Rcw = VPose->estimate().Rcw[cam_idx];
     const Eigen::Vector3d &tcw = VPose->estimate().tcw[cam_idx];

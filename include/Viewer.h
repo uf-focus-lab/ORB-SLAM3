@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef VIEWER_H
 #define VIEWER_H
+
+using namespace std;
 
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
@@ -86,11 +86,11 @@ private:
     void SetFinish();
     bool mbFinishRequested;
     bool mbFinished;
-    std::mutex mMutexFinish;
+    mutex mMutexFinish;
 
     bool mbStopped;
     bool mbStopRequested;
-    std::mutex mMutexStop;
+    mutex mMutexStop;
 
     bool mbStopTrack;
 

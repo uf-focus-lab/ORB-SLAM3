@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include <signal.h>
 #include <stdlib.h>
 #include <iostream>
@@ -45,11 +47,11 @@ void exit_loop_handler(int s){
 
 }
 
-rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
-bool profile_changed(const std::vector<rs2::stream_profile>& current, const std::vector<rs2::stream_profile>& prev);
+rs2_stream find_stream_to_align(const vector<rs2::stream_profile>& streams);
+bool profile_changed(const vector<rs2::stream_profile>& current, const vector<rs2::stream_profile>& prev);
 
-void interpolateData(const std::vector<double> &vBase_times,
-                     std::vector<rs2_vector> &vInterp_data, std::vector<double> &vInterp_times,
+void interpolateData(const vector<double> &vBase_times,
+                     vector<rs2_vector> &vInterp_data, vector<double> &vInterp_times,
                      const rs2_vector &prev_data, const double &prev_time);
 
 rs2_vector interpolateMeasure(const double target_time,
@@ -61,7 +63,7 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
     // Sensors usually have several options to control their properties
     //  such as Exposure, Brightness etc.
 
-    std::cout << "Sensor supports the following options:\n" << std::endl;
+    cout << "Sensor supports the following options:\n" << endl;
 
     // The following loop shows how to iterate over all available options
     // Starting from 0 until RS2_OPTION_COUNT (exclusive)
@@ -69,28 +71,28 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
     {
         rs2_option option_type = static_cast<rs2_option>(i);
         //SDK enum types can be streamed to get a string that represents them
-        std::cout << "  " << i << ": " << option_type;
+        cout << "  " << i << ": " << option_type;
 
         // To control an option, use the following api:
 
         // First, verify that the sensor actually supports this option
         if (sensor.supports(option_type))
         {
-            std::cout << std::endl;
+            cout << endl;
 
             // Get a human readable description of the option
             const char* description = sensor.get_option_description(option_type);
-            std::cout << "       Description   : " << description << std::endl;
+            cout << "       Description   : " << description << endl;
 
             // Get the current value of the option
             float current_value = sensor.get_option(option_type);
-            std::cout << "       Current Value : " << current_value << std::endl;
+            cout << "       Current Value : " << current_value << endl;
 
             //To change the value of an option, please follow the change_sensor_option() function
         }
         else
         {
-            std::cout << " is not supported" << std::endl;
+            cout << " is not supported" << endl;
         }
     }
 
@@ -129,13 +131,13 @@ int main(int argc, char **argv) {
     rs2::device selected_device;
     if (devices.size() == 0)
     {
-        std::cerr << "No device connected, please connect a RealSense device" << std::endl;
+        cerr << "No device connected, please connect a RealSense device" << endl;
         return 0;
     }
     else
         selected_device = devices[0];
 
-    std::vector<rs2::sensor> sensors = selected_device.query_sensors();
+    vector<rs2::sensor> sensors = selected_device.query_sensors();
     int index = 0;
     // We can now iterate the sensors and print their names
     for (rs2::sensor sensor : sensors)
@@ -146,7 +148,7 @@ int main(int argc, char **argv) {
                 // sensor.set_option(RS2_OPTION_AUTO_EXPOSURE_LIMIT,50000);
                 sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1); // emitter on for depth information
             }
-            // std::cout << "  " << index << " : " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
+            // cout << "  " << index << " : " << sensor.get_info(RS2_CAMERA_INFO_NAME) << endl;
             get_sensor_option(sensor);
             if (index == 2){
                 // RGB camera
@@ -179,8 +181,8 @@ int main(int argc, char **argv) {
     cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
 
     // IMU callback
-    std::mutex imu_mutex;
-    std::condition_variable cond_image_rec;
+    mutex imu_mutex;
+    condition_variable cond_image_rec;
 
     vector<double> v_accel_timestamp;
     vector<rs2_vector> v_accel_data;
@@ -217,7 +219,7 @@ int main(int argc, char **argv) {
 
     auto imu_callback = [&](const rs2::frame& frame)
     {
-        std::unique_lock<std::mutex> lock(imu_mutex);
+        unique_lock<mutex> lock(imu_mutex);
 
         if(rs2::frameset fs = frame.as<rs2::frameset>())
         {
@@ -296,25 +298,25 @@ int main(int argc, char **argv) {
     rs2::stream_profile imu_stream = pipe_profile.get_stream(RS2_STREAM_GYRO);
     float* Rbc = cam_stream.get_extrinsics_to(imu_stream).rotation;
     float* tbc = cam_stream.get_extrinsics_to(imu_stream).translation;
-    std::cout << "Tbc = " << std::endl;
+    cout << "Tbc = " << endl;
     for(int i = 0; i<3; i++){
         for(int j = 0; j<3; j++)
-            std::cout << Rbc[i*3 + j] << ", ";
-        std::cout << tbc[i] << "\n";
+            cout << Rbc[i*3 + j] << ", ";
+        cout << tbc[i] << "\n";
     }
 
     rs2_intrinsics intrinsics_cam = cam_stream.as<rs2::video_stream_profile>().get_intrinsics();
     width_img = intrinsics_cam.width;
     height_img = intrinsics_cam.height;
-    std::cout << " fx = " << intrinsics_cam.fx << std::endl;
-    std::cout << " fy = " << intrinsics_cam.fy << std::endl;
-    std::cout << " cx = " << intrinsics_cam.ppx << std::endl;
-    std::cout << " cy = " << intrinsics_cam.ppy << std::endl;
-    std::cout << " height = " << intrinsics_cam.height << std::endl;
-    std::cout << " width = " << intrinsics_cam.width << std::endl;
-    std::cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " <<
-    intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
-    std::cout << " Model = " << intrinsics_cam.model << std::endl;
+    cout << " fx = " << intrinsics_cam.fx << endl;
+    cout << " fy = " << intrinsics_cam.fy << endl;
+    cout << " cx = " << intrinsics_cam.ppx << endl;
+    cout << " cy = " << intrinsics_cam.ppy << endl;
+    cout << " height = " << intrinsics_cam.height << endl;
+    cout << " width = " << intrinsics_cam.width << endl;
+    cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " <<
+    intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << endl;
+    cout << " Model = " << intrinsics_cam.model << endl;
 
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -335,20 +337,20 @@ int main(int argc, char **argv) {
 
     while (!SLAM.isShutDown())
     {
-        std::vector<rs2_vector> vGyro;
-        std::vector<double> vGyro_times;
-        std::vector<rs2_vector> vAccel;
-        std::vector<double> vAccel_times;
+        vector<rs2_vector> vGyro;
+        vector<double> vGyro_times;
+        vector<rs2_vector> vAccel;
+        vector<double> vAccel_times;
         rs2::frameset fs;
         {
-            std::unique_lock<std::mutex> lk(imu_mutex);
+            unique_lock<mutex> lk(imu_mutex);
             if(!image_ready)
                 cond_image_rec.wait(lk);
 
 #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_Start_Process = chrono::steady_clock::now();
 #else
-            std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
+            chrono::monotonic_clock::time_point time_Start_Process = chrono::monotonic_clock::now();
 #endif
 
             fs = fsSLAM;
@@ -413,9 +415,9 @@ int main(int argc, char **argv) {
         {
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point t_Start_Resize = chrono::steady_clock::now();
     #else
-            std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+            chrono::monotonic_clock::time_point t_Start_Resize = chrono::monotonic_clock::now();
     #endif
 #endif
             int width = im.cols * imageScale;
@@ -425,20 +427,20 @@ int main(int argc, char **argv) {
 
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point t_End_Resize = chrono::steady_clock::now();
     #else
-            std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+            chrono::monotonic_clock::time_point t_End_Resize = chrono::monotonic_clock::now();
     #endif
-            t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+            t_resize = chrono::duration_cast<chrono::duration<double,milli> >(t_End_Resize - t_Start_Resize).count();
             SLAM.InsertResizeTime(t_resize);
 #endif
         }
 
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t_Start_Track = chrono::steady_clock::now();
     #else
-        std::chrono::monotonic_clock::time_point t_Start_Track = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t_Start_Track = chrono::monotonic_clock::now();
     #endif
 #endif
         // Pass the image to the SLAM system
@@ -446,11 +448,11 @@ int main(int argc, char **argv) {
 
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_End_Track = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t_End_Track = chrono::steady_clock::now();
     #else
-        std::chrono::monotonic_clock::time_point t_End_Track = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t_End_Track = chrono::monotonic_clock::now();
     #endif
-        t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
+        t_track = t_resize + chrono::duration_cast<chrono::duration<double,milli> >(t_End_Track - t_Start_Track).count();
         SLAM.InsertTrackTime(t_track);
 #endif
 
@@ -460,7 +462,7 @@ int main(int argc, char **argv) {
     cout << "System shutdown!\n";
 }
 
-rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
+rs2_stream find_stream_to_align(const vector<rs2::stream_profile>& streams)
 {
     //Given a vector of streams, we try to find a depth stream and another stream to align depth with.
     //We prioritize color streams to make the view look better.
@@ -488,22 +490,22 @@ rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
     }
 
     if(!depth_stream_found)
-        throw std::runtime_error("No Depth stream available");
+        throw runtime_error("No Depth stream available");
 
     if (align_to == RS2_STREAM_ANY)
-        throw std::runtime_error("No stream found to align with Depth");
+        throw runtime_error("No stream found to align with Depth");
 
     return align_to;
 }
 
 
-bool profile_changed(const std::vector<rs2::stream_profile>& current, const std::vector<rs2::stream_profile>& prev)
+bool profile_changed(const vector<rs2::stream_profile>& current, const vector<rs2::stream_profile>& prev)
 {
     for (auto&& sp : prev)
     {
         //If previous profile is in current (maybe just added another)
-        auto itr = std::find_if(std::begin(current), std::end(current), [&sp](const rs2::stream_profile& current_sp) { return sp.unique_id() == current_sp.unique_id(); });
-        if (itr == std::end(current)) //If it previous stream wasn't found in current
+        auto itr = find_if(begin(current), end(current), [&sp](const rs2::stream_profile& current_sp) { return sp.unique_id() == current_sp.unique_id(); });
+        if (itr == end(current)) //If it previous stream wasn't found in current
         {
             return true;
         }

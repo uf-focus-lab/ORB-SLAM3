@@ -15,17 +15,17 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef FRAME_H
 #define FRAME_H
 
-#include<vector>
+using namespace std;
 
-#include "Thirdparty/DBoW2/DBoW2/BowVector.h"
-#include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include <vector>
 
-#include "Thirdparty/Sophus/sophus/geometry.hpp"
+#include <DBoW2/BowVector.h>
+#include <DBoW2/FeatureVector.h>
+
+#include <sophus/geometry.hpp>
 
 #include "ImuTypes.h"
 #include "ORBVocabulary.h"
@@ -37,7 +37,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "Eigen/Core"
-#include "sophus/se3.hpp"
+#include <sophus/se3.hpp>
 
 namespace ORB_SLAM3
 {
@@ -225,14 +225,14 @@ public:
     // Vector of keypoints (original for visualization) and undistorted (actually used by the system).
     // In the stereo case, mvKeysUn is redundant as images must be rectified.
     // In the RGB-D case, RGB images can be distorted.
-    std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
-    std::vector<cv::KeyPoint> mvKeysUn;
+    vector<cv::KeyPoint> mvKeys, mvKeysRight;
+    vector<cv::KeyPoint> mvKeysUn;
 
     // Corresponding stereo coordinate and depth for each keypoint.
-    std::vector<MapPoint*> mvpMapPoints;
+    vector<MapPoint*> mvpMapPoints;
     // "Monocular" keypoints have a negative value.
-    std::vector<float> mvuRight;
-    std::vector<float> mvDepth;
+    vector<float> mvuRight;
+    vector<float> mvDepth;
 
     // Bag of Words Vector structures.
     DBoW2::BowVector mBowVec;
@@ -243,13 +243,13 @@ public:
 
     // MapPoints associated to keypoints, NULL pointer if no association.
     // Flag to identify outlier associations.
-    std::vector<bool> mvbOutlier;
+    vector<bool> mvbOutlier;
     int mnCloseMPs;
 
     // Keypoints are assigned to cells in a grid to reduce matching complexity when projecting MapPoints.
     static float mfGridElementWidthInv;
     static float mfGridElementHeightInv;
-    std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
+    vector<size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
     IMU::Bias mPredBias;
 
@@ -320,7 +320,7 @@ private:
 
     bool mbImuPreintegrated;
 
-    std::mutex *mpMutexImu;
+    mutex *mpMutexImu;
 
 public:
     GeometricCamera* mpCamera, *mpCamera2;
@@ -331,17 +331,17 @@ public:
     int monoLeft, monoRight;
 
     //For stereo matching
-    std::vector<int> mvLeftToRightMatch, mvRightToLeftMatch;
+    vector<int> mvLeftToRightMatch, mvRightToLeftMatch;
 
     //For stereo fisheye matching
     static cv::BFMatcher BFmatcher;
 
     //Triangulated stereo observations using as reference the left camera. These are
     //computed during ComputeStereoFishEyeMatches
-    std::vector<Eigen::Vector3f> mvStereo3Dpoints;
+    vector<Eigen::Vector3f> mvStereo3Dpoints;
 
     //Grid for the right image
-    std::vector<std::size_t> mGridRight[FRAME_GRID_COLS][FRAME_GRID_ROWS];
+    vector<size_t> mGridRight[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
     Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera, GeometricCamera* pCamera2, Sophus::SE3f& Tlr,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
 

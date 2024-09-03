@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef KEYFRAMEDATABASE_H
 #define KEYFRAMEDATABASE_H
+
+using namespace std;
 
 #include <vector>
 #include <list>
@@ -33,7 +33,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/list.hpp>
 
-#include<mutex>
+#include <mutex>
 
 
 namespace ORB_SLAM3
@@ -68,7 +68,7 @@ public:
     void clearMap(Map* pMap);
 
     // Loop Detection(DEPRECATED)
-    std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
+    vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
 
     // Loop and Merge Detection
     void DetectCandidates(KeyFrame* pKF, float minScore,vector<KeyFrame*>& vpLoopCand, vector<KeyFrame*>& vpMergeCand);
@@ -76,7 +76,7 @@ public:
     void DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &vpLoopCand, vector<KeyFrame*> &vpMergeCand, int nNumCandidates);
 
     // Relocalization
-    std::vector<KeyFrame*> DetectRelocalizationCandidates(Frame* F, Map* pMap);
+    vector<KeyFrame*> DetectRelocalizationCandidates(Frame* F, Map* pMap);
 
     void PreSave();
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
@@ -88,13 +88,13 @@ protected:
    const ORBVocabulary* mpVoc;
 
    // Inverted file
-   std::vector<list<KeyFrame*> > mvInvertedFile;
+   vector<list<KeyFrame*> > mvInvertedFile;
 
    // For save relation without pointer, this is necessary for save/load function
-   std::vector<list<long unsigned int> > mvBackupInvertedFileId;
+   vector<list<long unsigned int> > mvBackupInvertedFileId;
 
    // Mutex
-   std::mutex mMutex;
+   mutex mMutex;
 
 };
 

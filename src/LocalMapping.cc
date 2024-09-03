@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "LocalMapping.h"
 #include "LoopClosing.h"
@@ -24,8 +26,8 @@
 #include "Converter.h"
 #include "GeometricTools.h"
 
-#include<mutex>
-#include<chrono>
+#include <mutex>
+#include <chrono>
 
 namespace ORB_SLAM3
 {
@@ -77,23 +79,23 @@ void LocalMapping::Run()
             double timeLBA_ms = 0;
             double timeKFCulling_ms = 0;
 
-            std::chrono::steady_clock::time_point time_StartProcessKF = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_StartProcessKF = chrono::steady_clock::now();
 #endif
             // BoW conversion and insertion in Map
             ProcessNewKeyFrame();
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_EndProcessKF = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_EndProcessKF = chrono::steady_clock::now();
 
-            double timeProcessKF = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndProcessKF - time_StartProcessKF).count();
+            double timeProcessKF = chrono::duration_cast<chrono::duration<double,milli> >(time_EndProcessKF - time_StartProcessKF).count();
             vdKFInsert_ms.push_back(timeProcessKF);
 #endif
 
             // Check recent MapPoints
             MapPointCulling();
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_EndMPCulling = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_EndMPCulling = chrono::steady_clock::now();
 
-            double timeMPCulling = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndMPCulling - time_EndProcessKF).count();
+            double timeMPCulling = chrono::duration_cast<chrono::duration<double,milli> >(time_EndMPCulling - time_EndProcessKF).count();
             vdMPCulling_ms.push_back(timeMPCulling);
 #endif
 
@@ -109,9 +111,9 @@ void LocalMapping::Run()
             }
 
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_EndMPCreation = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_EndMPCreation = chrono::steady_clock::now();
 
-            double timeMPCreation = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndMPCreation - time_EndMPCulling).count();
+            double timeMPCreation = chrono::duration_cast<chrono::duration<double,milli> >(time_EndMPCreation - time_EndMPCulling).count();
             vdMPCreation_ms.push_back(timeMPCreation);
 #endif
 
@@ -157,11 +159,11 @@ void LocalMapping::Run()
 
                 }
 #ifdef REGISTER_TIMES
-                std::chrono::steady_clock::time_point time_EndLBA = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point time_EndLBA = chrono::steady_clock::now();
 
                 if(b_doneLBA)
                 {
-                    timeLBA_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndLBA - time_EndMPCreation).count();
+                    timeLBA_ms = chrono::duration_cast<chrono::duration<double,milli> >(time_EndLBA - time_EndMPCreation).count();
                     vdLBA_ms.push_back(timeLBA_ms);
 
                     nLBA_exec += 1;
@@ -191,9 +193,9 @@ void LocalMapping::Run()
                 KeyFrameCulling();
 
 #ifdef REGISTER_TIMES
-                std::chrono::steady_clock::time_point time_EndKFCulling = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point time_EndKFCulling = chrono::steady_clock::now();
 
-                timeKFCulling_ms = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndKFCulling - time_EndLBA).count();
+                timeKFCulling_ms = chrono::duration_cast<chrono::duration<double,milli> >(time_EndKFCulling - time_EndLBA).count();
                 vdKFCulling_ms.push_back(timeKFCulling_ms);
 #endif
 
@@ -250,9 +252,9 @@ void LocalMapping::Run()
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
 
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_EndLocalMap = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_EndLocalMap = chrono::steady_clock::now();
 
-            double timeLocalMap = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndLocalMap - time_StartProcessKF).count();
+            double timeLocalMap = chrono::duration_cast<chrono::duration<double,milli> >(time_EndLocalMap - time_StartProcessKF).count();
             vdLMTotal_ms.push_back(timeLocalMap);
 #endif
         }
@@ -400,7 +402,7 @@ void LocalMapping::CreateNewMapPoints()
         int count=0;
         while((vpNeighKFs.size()<=nn)&&(pKF->mPrevKF)&&(count++<nn))
         {
-            vector<KeyFrame*>::iterator it = std::find(vpNeighKFs.begin(), vpNeighKFs.end(), pKF->mPrevKF);
+            vector<KeyFrame*>::iterator it = find(vpNeighKFs.begin(), vpNeighKFs.end(), pKF->mPrevKF);
             if(it==vpNeighKFs.end())
                 vpNeighKFs.push_back(pKF->mPrevKF);
             pKF = pKF->mPrevKF;
@@ -1263,10 +1265,10 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     mInitTime = mpTracker->mLastFrame.mTimeStamp-vpKF.front()->mTimeStamp;
 
-    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
     Optimizer::InertialOptimization(mpAtlas->GetCurrentMap(), mRwg, mScale, mbg, mba, mbMonocular, infoInertial, false, false, priorG, priorA);
 
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
 
     if (mScale<1e-1)
     {
@@ -1300,7 +1302,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
         mpCurrentKeyFrame->bImu = true;
     }
 
-    std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t4 = chrono::steady_clock::now();
     if (bFIBA)
     {
         if (priorA!=0.f)
@@ -1309,7 +1311,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
             Optimizer::FullInertialBA(mpAtlas->GetCurrentMap(), 100, false, mpCurrentKeyFrame->mnId, NULL, false);
     }
 
-    std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t5 = chrono::steady_clock::now();
 
     Verbose::PrintMess("Global Bundle Adjustment finished\nUpdating map ...", Verbose::VERBOSITY_NORMAL);
 
@@ -1457,9 +1459,9 @@ void LocalMapping::ScaleRefinement()
     mRwg = Eigen::Matrix3d::Identity();
     mScale=1.0;
 
-    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
     Optimizer::InertialOptimization(mpAtlas->GetCurrentMap(), mRwg, mScale);
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
 
     if (mScale<1e-1) // 1e-1
     {
@@ -1471,14 +1473,14 @@ void LocalMapping::ScaleRefinement()
     Sophus::SO3d so3wg(mRwg);
     // Before this line we are not changing the map
     unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
-    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
     if ((fabs(mScale-1.f)>0.002)||!mbMonocular)
     {
         Sophus::SE3f Tgw(mRwg.cast<float>().transpose(),Eigen::Vector3f::Zero());
         mpAtlas->GetCurrentMap()->ApplyScaledRotation(Tgw,mScale,true);
         mpTracker->UpdateFrameIMU(mScale,mpCurrentKeyFrame->GetImuBias(),mpCurrentKeyFrame);
     }
-    std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point t3 = chrono::steady_clock::now();
 
     for(list<KeyFrame*>::iterator lit = mlNewKeyFrames.begin(), lend=mlNewKeyFrames.end(); lit!=lend; lit++)
     {
@@ -1487,7 +1489,7 @@ void LocalMapping::ScaleRefinement()
     }
     mlNewKeyFrames.clear();
 
-    double t_inertial_only = std::chrono::duration_cast<std::chrono::duration<double> >(t1 - t0).count();
+    double t_inertial_only = chrono::duration_cast<chrono::duration<double> >(t1 - t0).count();
 
     // To perform pose-inertial opt w.r.t. last keyframe
     mpCurrentKeyFrame->GetMap()->IncreaseChangeIndex();

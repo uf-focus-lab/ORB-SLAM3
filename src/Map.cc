@@ -16,10 +16,12 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "Map.h"
 
-#include<mutex>
+#include <mutex>
 
 namespace ORB_SLAM3
 {
@@ -356,7 +358,7 @@ void Map::SetLastMapChange(int currentChangeId)
     mnMapChangeNotified = currentChangeId;
 }
 
-void Map::PreSave(std::set<GeometricCamera*> &spCams)
+void Map::PreSave(set<GeometricCamera*> &spCams)
 {
     int nMPWithoutObs = 0;
     for(MapPoint* pMPi : mspMapPoints)
@@ -368,8 +370,8 @@ void Map::PreSave(std::set<GeometricCamera*> &spCams)
         {
             nMPWithoutObs++;
         }
-        map<KeyFrame*, std::tuple<int,int>> mpObs = pMPi->GetObservations();
-        for(map<KeyFrame*, std::tuple<int,int>>::iterator it= mpObs.begin(), end=mpObs.end(); it!=end; ++it)
+        map<KeyFrame*, tuple<int,int>> mpObs = pMPi->GetObservations();
+        for(map<KeyFrame*, tuple<int,int>>::iterator it= mpObs.begin(), end=mpObs.end(); it!=end; ++it)
         {
             if(it->first->GetMap() != this || it->first->isBad())
             {
@@ -426,8 +428,8 @@ void Map::PreSave(std::set<GeometricCamera*> &spCams)
 
 void Map::PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc/*, map<long unsigned int, KeyFrame*>& mpKeyFrameId*/, map<unsigned int, GeometricCamera*> &mpCams)
 {
-    std::copy(mvpBackupMapPoints.begin(), mvpBackupMapPoints.end(), std::inserter(mspMapPoints, mspMapPoints.begin()));
-    std::copy(mvpBackupKeyFrames.begin(), mvpBackupKeyFrames.end(), std::inserter(mspKeyFrames, mspKeyFrames.begin()));
+    copy(mvpBackupMapPoints.begin(), mvpBackupMapPoints.end(), inserter(mspMapPoints, mspMapPoints.begin()));
+    copy(mvpBackupKeyFrames.begin(), mvpBackupKeyFrames.end(), inserter(mspKeyFrames, mspKeyFrames.begin()));
 
     map<long unsigned int,MapPoint*> mpMapPointId;
     for(MapPoint* pMPi : mspMapPoints)

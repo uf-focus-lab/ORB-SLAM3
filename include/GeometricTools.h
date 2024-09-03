@@ -16,9 +16,12 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef GEOMETRIC_TOOLS_H
 #define GEOMETRIC_TOOLS_H
+
+using namespace std;
+
+#include <iostream>
 
 #include <opencv2/core/core.hpp>
 #include <sophus/se3.hpp>
@@ -42,17 +45,17 @@ public:
     template<int rows, int cols>
     static bool CheckMatrices(const cv::Mat &cvMat, const Eigen::Matrix<float,rows,cols> &eigMat) {
         const float epsilon = 1e-3;
-        // std::cout << cvMat.cols - cols << cvMat.rows - rows << std::endl;
+        // cout << cvMat.cols - cols << cvMat.rows - rows << endl;
         if(rows != cvMat.rows || cols != cvMat.cols) {
-            std::cout << "wrong cvmat size\n";
+            cout << "wrong cvmat size\n";
             return false;
         }
         for(int i = 0; i < rows; i++)
             for(int j = 0; j < cols; j++)
                 if ((cvMat.at<float>(i,j) > (eigMat(i,j) + epsilon)) ||
                     (cvMat.at<float>(i,j) < (eigMat(i,j) - epsilon))){
-                    std::cout << "cv mat:\n" << cvMat << std::endl;
-                    std::cout << "eig mat:\n" << eigMat << std::endl;
+                    cout << "cv mat:\n" << cvMat << endl;
+                    cout << "eig mat:\n" << eigMat << endl;
                     return false;
                 }
         return true;
@@ -65,8 +68,8 @@ public:
             for(int j = 0; j < cols; j++)
                 if ((eigMat1(i,j) > (eigMat2(i,j) + epsilon)) ||
                     (eigMat1(i,j) < (eigMat2(i,j) - epsilon))){
-                    std::cout << "eig mat 1:\n" << eigMat1 << std::endl;
-                    std::cout << "eig mat 2:\n" << eigMat2 << std::endl;
+                    cout << "eig mat 1:\n" << eigMat1 << endl;
+                    cout << "eig mat 2:\n" << eigMat2 << endl;
                     return false;
                 }
         return true;

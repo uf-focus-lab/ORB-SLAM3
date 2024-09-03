@@ -15,11 +15,12 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef IMUTYPES_H
 #define IMUTYPES_H
 
+using namespace std;
+
+#include <iostream>
 #include <vector>
 #include <utility>
 #include <opencv2/core/core.hpp>
@@ -80,7 +81,7 @@ public:
             const float &b_ang_vel_x, const float &b_ang_vel_y, const float &b_ang_vel_z):
             bax(b_acc_x), bay(b_acc_y), baz(b_acc_z), bwx(b_ang_vel_x), bwy(b_ang_vel_y), bwz(b_ang_vel_z){}
     void CopyFrom(Bias &b);
-    friend std::ostream& operator<< (std::ostream &out, const Bias &b);
+    friend ostream& operator<< (ostream &out, const Bias &b);
 
 public:
     float bax, bay, baz;
@@ -200,11 +201,11 @@ public:
     Bias GetUpdatedBias();
 
     void printMeasurements() const {
-        std::cout << "pint meas:\n";
+        cout << "pint meas:\n";
         for(int i=0; i<mvMeasurements.size(); i++){
-            std::cout << "meas " << mvMeasurements[i].t << std::endl;
+            cout << "meas " << mvMeasurements[i].t << endl;
         }
-        std::cout << "end pint meas:\n";
+        cout << "end pint meas:\n";
     }
 
 public:
@@ -245,9 +246,9 @@ private:
         float t;
     };
 
-    std::vector<integrable> mvMeasurements;
+    vector<integrable> mvMeasurements;
 
-    std::mutex mMutex;
+    mutex mMutex;
 };
 
 // Lie Algebra Functions

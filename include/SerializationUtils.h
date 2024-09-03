@@ -15,9 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef SERIALIZATION_UTILS_H
 #define SERIALIZATION_UTILS_H
+
+using namespace std;
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/vector.hpp>
@@ -116,7 +117,7 @@ void serializeMatrix(Archive& ar, const cv::Mat& mat, const unsigned int version
 }
 
 template<class Archive>
-void serializeVectorKeyPoints(Archive& ar, const std::vector<cv::KeyPoint>& vKP, const unsigned int version)
+void serializeVectorKeyPoints(Archive& ar, const vector<cv::KeyPoint>& vKP, const unsigned int version)
 {
     int NumEl;
 
@@ -126,7 +127,7 @@ void serializeVectorKeyPoints(Archive& ar, const std::vector<cv::KeyPoint>& vKP,
 
     ar & NumEl;
 
-    std::vector<cv::KeyPoint> vKPaux = vKP;
+    vector<cv::KeyPoint> vKPaux = vKP;
     if (Archive::is_loading::value)
         vKPaux.reserve(NumEl);
 
@@ -155,8 +156,8 @@ void serializeVectorKeyPoints(Archive& ar, const std::vector<cv::KeyPoint>& vKP,
 
     if (Archive::is_loading::value)
     {
-        std::vector<cv::KeyPoint> *ptr;
-        ptr = (std::vector<cv::KeyPoint>*)( &vKP );
+        vector<cv::KeyPoint> *ptr;
+        ptr = (vector<cv::KeyPoint>*)( &vKP );
         *ptr = vKPaux;
     }
 }

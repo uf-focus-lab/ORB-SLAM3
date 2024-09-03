@@ -16,12 +16,14 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "ImuTypes.h"
 #include "Converter.h"
 
 #include "GeometricTools.h"
 
-#include<iostream>
+#include <iostream>
 
 namespace ORB_SLAM3
 {
@@ -167,8 +169,8 @@ void Preintegrated::Initialize(const Bias &b_)
 
 void Preintegrated::Reintegrate()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
-    const std::vector<integrable> aux = mvMeasurements;
+    unique_lock<mutex> lock(mMutex);
+    const vector<integrable> aux = mvMeasurements;
     Initialize(bu);
     for(size_t i=0;i<aux.size();i++)
         IntegrateNewMeasurement(aux[i].a,aux[i].w,aux[i].t);
@@ -239,8 +241,8 @@ void Preintegrated::MergePrevious(Preintegrated* pPrev)
     if (pPrev==this)
         return;
 
-    std::unique_lock<std::mutex> lock1(mMutex);
-    std::unique_lock<std::mutex> lock2(pPrev->mMutex);
+    unique_lock<mutex> lock1(mMutex);
+    unique_lock<mutex> lock2(pPrev->mMutex);
     Bias bav;
     bav.bwx = bu.bwx;
     bav.bwy = bu.bwy;
@@ -249,8 +251,8 @@ void Preintegrated::MergePrevious(Preintegrated* pPrev)
     bav.bay = bu.bay;
     bav.baz = bu.baz;
 
-    const std::vector<integrable > aux1 = pPrev->mvMeasurements;
-    const std::vector<integrable> aux2 = mvMeasurements;
+    const vector<integrable > aux1 = pPrev->mvMeasurements;
+    const vector<integrable> aux2 = mvMeasurements;
 
     Initialize(bav);
     for(size_t i=0;i<aux1.size();i++)
@@ -262,7 +264,7 @@ void Preintegrated::MergePrevious(Preintegrated* pPrev)
 
 void Preintegrated::SetNewBias(const Bias &bu_)
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     bu = bu_;
 
     db(0) = bu_.bwx-b.bwx;
@@ -275,14 +277,14 @@ void Preintegrated::SetNewBias(const Bias &bu_)
 
 IMU::Bias Preintegrated::GetDeltaBias(const Bias &b_)
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return IMU::Bias(b_.bax-b.bax,b_.bay-b.bay,b_.baz-b.baz,b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz);
 }
 
 
 Eigen::Matrix3f Preintegrated::GetDeltaRotation(const Bias &b_)
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     Eigen::Vector3f dbg;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
     return NormalizeRotation(dR * Sophus::SO3f::exp(JRg * dbg).matrix());
@@ -290,7 +292,7 @@ Eigen::Matrix3f Preintegrated::GetDeltaRotation(const Bias &b_)
 
 Eigen::Vector3f Preintegrated::GetDeltaVelocity(const Bias &b_)
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     Eigen::Vector3f dbg, dba;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
     dba << b_.bax-b.bax,b_.bay-b.bay,b_.baz-b.baz;
@@ -299,7 +301,7 @@ Eigen::Vector3f Preintegrated::GetDeltaVelocity(const Bias &b_)
 
 Eigen::Vector3f Preintegrated::GetDeltaPosition(const Bias &b_)
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     Eigen::Vector3f dbg, dba;
     dbg << b_.bwx-b.bwx,b_.bwy-b.bwy,b_.bwz-b.bwz;
     dba << b_.bax-b.bax,b_.bay-b.bay,b_.baz-b.baz;
@@ -308,53 +310,53 @@ Eigen::Vector3f Preintegrated::GetDeltaPosition(const Bias &b_)
 
 Eigen::Matrix3f Preintegrated::GetUpdatedDeltaRotation()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return NormalizeRotation(dR * Sophus::SO3f::exp(JRg*db.head(3)).matrix());
 }
 
 Eigen::Vector3f Preintegrated::GetUpdatedDeltaVelocity()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return dV + JVg * db.head(3) + JVa * db.tail(3);
 }
 
 Eigen::Vector3f Preintegrated::GetUpdatedDeltaPosition()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return dP + JPg*db.head(3) + JPa*db.tail(3);
 }
 
 Eigen::Matrix3f Preintegrated::GetOriginalDeltaRotation() {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return dR;
 }
 
 Eigen::Vector3f Preintegrated::GetOriginalDeltaVelocity() {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return dV;
 }
 
 Eigen::Vector3f Preintegrated::GetOriginalDeltaPosition()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return dP;
 }
 
 Bias Preintegrated::GetOriginalBias()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return b;
 }
 
 Bias Preintegrated::GetUpdatedBias()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return bu;
 }
 
 Eigen::Matrix<float,6,1> Preintegrated::GetDeltaBias()
 {
-    std::unique_lock<std::mutex> lock(mMutex);
+    unique_lock<mutex> lock(mMutex);
     return db;
 }
 
@@ -368,7 +370,7 @@ void Bias::CopyFrom(Bias &b)
     bwz = b.bwz;
 }
 
-std::ostream& operator<< (std::ostream &out, const Bias &b)
+ostream& operator<< (ostream &out, const Bias &b)
 {
     if(b.bwx>0)
         out << " ";

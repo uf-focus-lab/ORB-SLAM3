@@ -15,9 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef CAMERAMODELS_KANNALABRANDT8_H
 #define CAMERAMODELS_KANNALABRANDT8_H
+
+using namespace std;
 
 
 #include <assert.h>
@@ -44,13 +45,13 @@ namespace ORB_SLAM3 {
             mnId=nNextId++;
             mnType = CAM_FISHEYE;
         }
-        KannalaBrandt8(const std::vector<float> _vParameters) : GeometricCamera(_vParameters), precision(1e-6), mvLappingArea(2,0) ,tvr(nullptr) {
+        KannalaBrandt8(const vector<float> _vParameters) : GeometricCamera(_vParameters), precision(1e-6), mvLappingArea(2,0) ,tvr(nullptr) {
             assert(mvParameters.size() == 8);
             mnId=nNextId++;
             mnType = CAM_FISHEYE;
         }
 
-        KannalaBrandt8(const std::vector<float> _vParameters, const float _precision) : GeometricCamera(_vParameters),
+        KannalaBrandt8(const vector<float> _vParameters, const float _precision) : GeometricCamera(_vParameters),
                                                                                         precision(_precision), mvLappingArea(2,0) {
             assert(mvParameters.size() == 8);
             mnId=nNextId++;
@@ -75,8 +76,8 @@ namespace ORB_SLAM3 {
         Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D);
 
 
-        bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,
-                                     Sophus::SE3f &T21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated);
+        bool ReconstructWithTwoViews(const vector<cv::KeyPoint>& vKeys1, const vector<cv::KeyPoint>& vKeys2, const vector<int> &vMatches12,
+                                     Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated);
 
         cv::Mat toK();
         Eigen::Matrix3f toK_();
@@ -85,15 +86,15 @@ namespace ORB_SLAM3 {
 
         float TriangulateMatches(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2,  const Eigen::Matrix3f& R12, const Eigen::Vector3f& t12, const float sigmaLevel, const float unc, Eigen::Vector3f& p3D);
 
-        std::vector<int> mvLappingArea;
+        vector<int> mvLappingArea;
 
         bool matchAndtriangulate(const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, GeometricCamera* pOther,
                                  Sophus::SE3f& Tcw1, Sophus::SE3f& Tcw2,
                                  const float sigmaLevel1, const float sigmaLevel2,
                                  Eigen::Vector3f& x3Dtriangulated);
 
-        friend std::ostream& operator<<(std::ostream& os, const KannalaBrandt8& kb);
-        friend std::istream& operator>>(std::istream& is, KannalaBrandt8& kb);
+        friend ostream& operator<<(ostream& os, const KannalaBrandt8& kb);
+        friend istream& operator>>(istream& is, KannalaBrandt8& kb);
 
         float GetPrecision(){ return precision;}
 

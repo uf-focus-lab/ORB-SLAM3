@@ -15,15 +15,16 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef ATLAS_H
 #define ATLAS_H
+
+using namespace std;
 
 #include "Map.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include "GeometricCamera.h"
-#include "Pinhole.h"
+#include "CameraModels/Pinhole.h"
 #include "KannalaBrandt8.h"
 
 #include <set>
@@ -90,10 +91,10 @@ public:
     //void EraseKeyFrame(KeyFrame* pKF);
 
     GeometricCamera* AddCamera(GeometricCamera* pCam);
-    std::vector<GeometricCamera*> GetAllCameras();
+    vector<GeometricCamera*> GetAllCameras();
 
     /* All methods without Map pointer work on current map */
-    void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
+    void SetReferenceMapPoints(const vector<MapPoint*> &vpMPs);
     void InformNewBigChange();
     int GetLastBigChangeIdx();
 
@@ -101,9 +102,9 @@ public:
     long unsigned KeyFramesInMap();
 
     // Method for get data in current map
-    std::vector<KeyFrame*> GetAllKeyFrames();
-    std::vector<MapPoint*> GetAllMapPoints();
-    std::vector<MapPoint*> GetReferenceMapPoints();
+    vector<KeyFrame*> GetAllKeyFrames();
+    vector<MapPoint*> GetAllMapPoints();
+    vector<MapPoint*> GetReferenceMapPoints();
 
     vector<Map*> GetAllMaps();
 
@@ -141,14 +142,14 @@ public:
 
 protected:
 
-    std::set<Map*> mspMaps;
-    std::set<Map*> mspBadMaps;
+    set<Map*> mspMaps;
+    set<Map*> mspBadMaps;
     // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
-    std::vector<Map*> mvpBackupMaps;
+    vector<Map*> mvpBackupMaps;
 
     Map* mpCurrentMap;
 
-    std::vector<GeometricCamera*> mvpCameras;
+    vector<GeometricCamera*> mvpCameras;
 
     unsigned long int mnLastInitKFidMap;
 
@@ -160,7 +161,7 @@ protected:
     ORBVocabulary* mpORBVocabulary;
 
     // Mutex
-    std::mutex mMutexAtlas;
+    mutex mMutexAtlas;
 
 
 }; // class Atlas

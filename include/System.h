@@ -15,18 +15,18 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+using namespace std;
+
 
 #include <unistd.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string>
-#include<thread>
-#include<opencv2/core/core.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <thread>
+#include <opencv2/core/core.hpp>
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -59,7 +59,7 @@ public:
     static eLevel th;
 
 public:
-    static void PrintMess(std::string str, eLevel lev)
+    static void PrintMess(string str, eLevel lev)
     {
         if(lev <= th)
             cout << str << endl;
@@ -102,7 +102,7 @@ public:
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
+    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = string());
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -174,8 +174,8 @@ public:
     // Information from most recent processed frame
     // You can call this right after TrackMonocular (or stereo or RGBD)
     int GetTrackingState();
-    std::vector<MapPoint*> GetTrackedMapPoints();
-    std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+    vector<MapPoint*> GetTrackedMapPoints();
+    vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
     // For debugging
     double GetTimeFromIMUInit();
@@ -232,17 +232,17 @@ private:
 
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
-    std::thread* mptLocalMapping;
-    std::thread* mptLoopClosing;
-    std::thread* mptViewer;
+    thread* mptLocalMapping;
+    thread* mptLoopClosing;
+    thread* mptViewer;
 
     // Reset flag
-    std::mutex mMutexReset;
+    mutex mMutexReset;
     bool mbReset;
     bool mbResetActiveMap;
 
     // Change mode flags
-    std::mutex mMutexMode;
+    mutex mMutexMode;
     bool mbActivateLocalizationMode;
     bool mbDeactivateLocalizationMode;
 
@@ -251,9 +251,9 @@ private:
 
     // Tracking state
     int mTrackingState;
-    std::vector<MapPoint*> mTrackedMapPoints;
-    std::vector<cv::KeyPoint> mTrackedKeyPointsUn;
-    std::mutex mMutexState;
+    vector<MapPoint*> mTrackedMapPoints;
+    vector<cv::KeyPoint> mTrackedKeyPointsUn;
+    mutex mMutexState;
 
     //
     string mStrLoadAtlasFromFile;

@@ -1,30 +1,23 @@
-ProjectHome=$(pwd)
+# Makescript for ORB_SLAM3
+# Author: Yuxuan Zhang
 
-ORB_SLAM3: *.target
-	$(info "Configuring and building ORB_SLAM3 ...")
-	cd ${ProjectHome} && mkdir -p build && cd build && \
-	cmake .. -DCMAKE_BUILD_TYPE=Release && \
-	make
+ORB_SLAM3: vocabulary/ORBvoc.txt
+	$(info Configuring and building ORB_SLAM3 ...)
+	@ mkdir -p build && cd build && \
+	  cmake .. -DCMAKE_BUILD_TYPE=Release && \
+	  make
 
-ORB_SLAM3.clean:
-	$(info "Cleaning ORB_SLAM3 ...")
-	cd ${ProjectHome}/build && rm -rf *
+vocabulary/ORBvoc.txt: vocabulary/ORBvoc.txt.tar.gz
+	$(info Uncompressing vocabulary ...)
+	@ cd vocabulary && tar -xf ORBvoc.txt.tar.gz
 
-vocabulary.target:
-	$(info "Uncompress vocabulary ...")
-	cd ${ProjectHome}/Vocabulary && \
-	test -f ORBvoc.txt && echo "ORBvoc.txt already extracted" || tar -xf ORBvoc.txt.tar.gz
-
-vocabulary.clean:
-	$(info "Cleaning vocabulary ...")
-	cd ${ProjectHome}/Vocabulary && rm -rf ORBvoc.txt
+clean:
+	$(info Cleaning vocabulary ...)
+	@ cd vocabulary && rm -rf ORBvoc.txt
+	$(info Cleaning ORB_SLAM3 ...)
+	@ rm -rf build
 
 # Thirdparty make scripts
-include ${thirdparty}/*.mk
+include scripts/*.mk
 
-clean: *.clean
-
-init:
-	git submodule update --init --recursive --remote
-
-.PHONY: *.target clean *.clean init
+.PHONY: *.build clean *.clean init

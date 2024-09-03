@@ -15,13 +15,13 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef ORBVOCABULARY_H
 #define ORBVOCABULARY_H
 
-#include"Thirdparty/DBoW2/DBoW2/FORB.h"
-#include"Thirdparty/DBoW2/DBoW2/TemplatedVocabulary.h"
+using namespace std;
+
+#include <DBoW2/FORB.h>
+#include <DBoW2/TemplatedVocabulary.h>
 
 namespace ORB_SLAM3
 {

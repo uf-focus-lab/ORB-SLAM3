@@ -15,18 +15,18 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef MAPDRAWER_H
 #define MAPDRAWER_H
 
-#include"Atlas.h"
-#include"MapPoint.h"
-#include"KeyFrame.h"
-#include "Settings.h"
-#include<pangolin/pangolin.h>
+using namespace std;
 
-#include<mutex>
+#include "Atlas.h"
+#include "MapPoint.h"
+#include "KeyFrame.h"
+#include "Settings.h"
+#include <pangolin/pangolin.h>
+
+#include <mutex>
 
 namespace ORB_SLAM3
 {
@@ -63,7 +63,7 @@ private:
 
     Sophus::SE3f mCameraPose;
 
-    std::mutex mMutexCamera;
+    mutex mMutexCamera;
 
     float mfFrameColors[6][3] = {{0.0f, 0.0f, 1.0f},
                                 {0.8f, 0.4f, 1.0f},

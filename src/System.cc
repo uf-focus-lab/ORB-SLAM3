@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 
 #include "System.h"
@@ -312,10 +314,10 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-    // std::cout << "start GrabImageStereo" << std::endl;
+    // cout << "start GrabImageStereo" << endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
 
-    // std::cout << "out grabber" << std::endl;
+    // cout << "out grabber" << endl;
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -672,10 +674,10 @@ void System::SaveTrajectoryEuRoC(const string &filename)
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
     int numMaxKFs = 0;
     Map* pBiggerMap;
-    std::cout << "There are " << std::to_string(vpMaps.size()) << " maps in the atlas" << std::endl;
+    cout << "There are " << to_string(vpMaps.size()) << " maps in the atlas" << endl;
     for(Map* pMap :vpMaps)
     {
-        std::cout << "  Map " << std::to_string(pMap->GetId()) << " has " << std::to_string(pMap->GetAllKeyFrames().size()) << " KFs" << std::endl;
+        cout << "  Map " << to_string(pMap->GetId()) << " has " << to_string(pMap->GetAllKeyFrames().size()) << " KFs" << endl;
         if(pMap->GetAllKeyFrames().size() > numMaxKFs)
         {
             numMaxKFs = pMap->GetAllKeyFrames().size();
@@ -1072,7 +1074,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const string &filename)
 
     if(!pBiggerMap)
     {
-        std::cout << "There is not a map!!" << std::endl;
+        cout << "There is not a map!!" << endl;
         return;
     }
 
@@ -1413,14 +1415,14 @@ void System::SaveAtlas(int type){
         pathSaveFileName = pathSaveFileName.append(".osa");
 
         string strVocabularyChecksum = CalculateCheckSum(mStrVocabularyFilePath,TEXT_FILE);
-        std::size_t found = mStrVocabularyFilePath.find_last_of("/\\");
+        size_t found = mStrVocabularyFilePath.find_last_of("/\\");
         string strVocabularyName = mStrVocabularyFilePath.substr(found+1);
 
         if(type == TEXT_FILE) // File text
         {
             cout << "Starting to write the save text file " << endl;
-            std::remove(pathSaveFileName.c_str());
-            std::ofstream ofs(pathSaveFileName, std::ios::binary);
+            remove(pathSaveFileName.c_str());
+            ofstream ofs(pathSaveFileName, ios::binary);
             boost::archive::text_oarchive oa(ofs);
 
             oa << strVocabularyName;
@@ -1431,8 +1433,8 @@ void System::SaveAtlas(int type){
         else if(type == BINARY_FILE) // File binary
         {
             cout << "Starting to write the save binary file" << endl;
-            std::remove(pathSaveFileName.c_str());
-            std::ofstream ofs(pathSaveFileName, std::ios::binary);
+            remove(pathSaveFileName.c_str());
+            ofstream ofs(pathSaveFileName, ios::binary);
             boost::archive::binary_oarchive oa(ofs);
             oa << strVocabularyName;
             oa << strVocabularyChecksum;
@@ -1454,7 +1456,7 @@ bool System::LoadAtlas(int type)
     if(type == TEXT_FILE) // File text
     {
         cout << "Starting to read the save text file " << endl;
-        std::ifstream ifs(pathLoadFileName, std::ios::binary);
+        ifstream ifs(pathLoadFileName, ios::binary);
         if(!ifs.good())
         {
             cout << "Load file not found" << endl;
@@ -1470,7 +1472,7 @@ bool System::LoadAtlas(int type)
     else if(type == BINARY_FILE) // File binary
     {
         cout << "Starting to read the save binary file"  << endl;
-        std::ifstream ifs(pathLoadFileName, std::ios::binary);
+        ifstream ifs(pathLoadFileName, ios::binary);
         if(!ifs.good())
         {
             cout << "Load file not found" << endl;
@@ -1511,9 +1513,9 @@ string System::CalculateCheckSum(string filename, int type)
 
     unsigned char c[MD5_DIGEST_LENGTH];
 
-    std::ios_base::openmode flags = std::ios::in;
+    ios_base::openmode flags = ios::in;
     if(type == BINARY_FILE) // Binary file
-        flags = std::ios::in | std::ios::binary;
+        flags = ios::in | ios::binary;
 
     ifstream f(filename.c_str(), flags);
     if ( !f.is_open() )

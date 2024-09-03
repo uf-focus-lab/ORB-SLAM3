@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef LOCALMAPPING_H
 #define LOCALMAPPING_H
+
+using namespace std;
 
 #include "KeyFrame.h"
 #include "Atlas.h"
@@ -42,7 +42,7 @@ class LocalMapping
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    LocalMapping(System* pSys, Atlas* pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName=std::string());
+    LocalMapping(System* pSys, Atlas* pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName=string());
 
     void SetLoopCloser(LoopClosing* pLoopCloser);
 
@@ -72,7 +72,7 @@ public:
     bool isFinished();
 
     int KeyframesInQueue(){
-        unique_lock<std::mutex> lock(mMutexNewKFs);
+        unique_lock<mutex> lock(mMutexNewKFs);
         return mlNewKeyFrames.size();
     }
 
@@ -80,7 +80,7 @@ public:
     double GetCurrKFTime();
     KeyFrame* GetCurrKF();
 
-    std::mutex mMutexImuInit;
+    mutex mMutexImuInit;
 
     Eigen::MatrixXd mcovInertial;
     Eigen::Matrix3d mRwg;
@@ -148,36 +148,36 @@ protected:
     bool mbResetRequested;
     bool mbResetRequestedActiveMap;
     Map* mpMapToReset;
-    std::mutex mMutexReset;
+    mutex mMutexReset;
 
     bool CheckFinish();
     void SetFinish();
     bool mbFinishRequested;
     bool mbFinished;
-    std::mutex mMutexFinish;
+    mutex mMutexFinish;
 
     Atlas* mpAtlas;
 
     LoopClosing* mpLoopCloser;
     Tracking* mpTracker;
 
-    std::list<KeyFrame*> mlNewKeyFrames;
+    list<KeyFrame*> mlNewKeyFrames;
 
     KeyFrame* mpCurrentKeyFrame;
 
-    std::list<MapPoint*> mlpRecentAddedMapPoints;
+    list<MapPoint*> mlpRecentAddedMapPoints;
 
-    std::mutex mMutexNewKFs;
+    mutex mMutexNewKFs;
 
     bool mbAbortBA;
 
     bool mbStopped;
     bool mbStopRequested;
     bool mbNotStop;
-    std::mutex mMutexStop;
+    mutex mMutexStop;
 
     bool mbAcceptKeyFrames;
-    std::mutex mMutexAccept;
+    mutex mMutexAccept;
 
     void InitializeIMU(float priorG = 1e2, float priorA = 1e6, bool bFirst = false);
     void ScaleRefinement();

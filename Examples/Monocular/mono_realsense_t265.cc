@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include <signal.h>
 #include <stdlib.h>
 #include <iostream>
@@ -117,9 +119,9 @@ int main(int argc, char **argv)
             {
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point t_Start_Resize = chrono::steady_clock::now();
     #else
-                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+                chrono::monotonic_clock::time_point t_Start_Resize = chrono::monotonic_clock::now();
     #endif
 #endif
                 int width = imCV.cols * imageScale;
@@ -127,11 +129,11 @@ int main(int argc, char **argv)
                 cv::resize(imCV, imCV, cv::Size(width, height));
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point t_End_Resize = chrono::steady_clock::now();
     #else
-                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+                chrono::monotonic_clock::time_point t_End_Resize = chrono::monotonic_clock::now();
     #endif
-                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+                t_resize = chrono::duration_cast<chrono::duration<double,milli> >(t_End_Resize - t_Start_Resize).count();
                 SLAM.InsertResizeTime(t_resize);
 #endif
             }
@@ -142,9 +144,9 @@ int main(int argc, char **argv)
 
 #ifdef REGISTER_TIMES
   #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
   #else
-            std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
+            chrono::monotonic_clock::time_point t1 = chrono::monotonic_clock::now();
   #endif
 #endif
 
@@ -153,11 +155,11 @@ int main(int argc, char **argv)
 
 #ifdef REGISTER_TIMES
   #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
   #else
-            std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
+            chrono::monotonic_clock::time_point t2 = chrono::monotonic_clock::now();
   #endif
-            t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
+            t_track = t_resize + chrono::duration_cast<chrono::duration<double,milli> >(t2 - t1).count();
             SLAM.InsertTrackTime(t_track);
 #endif
 

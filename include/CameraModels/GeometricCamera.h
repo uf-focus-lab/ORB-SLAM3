@@ -15,9 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef CAMERAMODELS_GEOMETRICCAMERA_H
 #define CAMERAMODELS_GEOMETRICCAMERA_H
+
+using namespace std;
 
 #include <vector>
 
@@ -55,7 +56,7 @@ namespace ORB_SLAM3 {
 
     public:
         GeometricCamera() {}
-        GeometricCamera(const std::vector<float> &_vParameters) : mvParameters(_vParameters) {}
+        GeometricCamera(const vector<float> &_vParameters) : mvParameters(_vParameters) {}
         ~GeometricCamera() {}
 
         virtual cv::Point2f project(const cv::Point3f &p3D) = 0;
@@ -70,8 +71,8 @@ namespace ORB_SLAM3 {
 
         virtual Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D) = 0;
 
-        virtual bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,
-                                             Sophus::SE3f &T21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated) = 0;
+        virtual bool ReconstructWithTwoViews(const vector<cv::KeyPoint>& vKeys1, const vector<cv::KeyPoint>& vKeys2, const vector<int> &vMatches12,
+                                             Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated) = 0;
 
         virtual cv::Mat toK() = 0;
         virtual Eigen::Matrix3f toK_() = 0;
@@ -98,7 +99,7 @@ namespace ORB_SLAM3 {
         static long unsigned int nNextId;
 
     protected:
-        std::vector<float> mvParameters;
+        vector<float> mvParameters;
 
         unsigned int mnId;
 

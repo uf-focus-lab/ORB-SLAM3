@@ -16,14 +16,16 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "Converter.h"
 
 namespace ORB_SLAM3
 {
 
-std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
+vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
-    std::vector<cv::Mat> vDesc;
+    vector<cv::Mat> vDesc;
     vDesc.reserve(Descriptors.rows);
     for (int j=0;j<Descriptors.rows;j++)
         vDesc.push_back(Descriptors.row(j));
@@ -236,12 +238,12 @@ Eigen::Matrix<float,4,4> Converter::toMatrix4f(const cv::Mat &cvMat4)
     return M;
 }
 
-std::vector<float> Converter::toQuaternion(const cv::Mat &M)
+vector<float> Converter::toQuaternion(const cv::Mat &M)
 {
     Eigen::Matrix<double,3,3> eigMat = toMatrix3d(M);
     Eigen::Quaterniond q(eigMat);
 
-    std::vector<float> v(4);
+    vector<float> v(4);
     v[0] = q.x();
     v[1] = q.y();
     v[2] = q.z();
@@ -268,7 +270,7 @@ bool Converter::isRotationMatrix(const cv::Mat &R)
 
 }
 
-std::vector<float> Converter::toEuler(const cv::Mat &R)
+vector<float> Converter::toEuler(const cv::Mat &R)
 {
     assert(isRotationMatrix(R));
     float sy = sqrt(R.at<float>(0,0) * R.at<float>(0,0) +  R.at<float>(1,0) * R.at<float>(1,0) );
@@ -289,7 +291,7 @@ std::vector<float> Converter::toEuler(const cv::Mat &R)
         z = 0;
     }
 
-    std::vector<float> v_euler(3);
+    vector<float> v_euler(3);
     v_euler[0] = x;
     v_euler[1] = y;
     v_euler[2] = z;

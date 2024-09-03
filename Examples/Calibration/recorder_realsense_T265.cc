@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include <signal.h>
 #include <stdlib.h>
 #include <iostream>
@@ -54,7 +56,7 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
     // Sensors usually have several options to control their properties
     //  such as Exposure, Brightness etc.
 
-    std::cout << "Sensor supports the following options:\n" << std::endl;
+    cout << "Sensor supports the following options:\n" << endl;
 
     // The following loop shows how to iterate over all available options
     // Starting from 0 until RS2_OPTION_COUNT (exclusive)
@@ -62,28 +64,28 @@ static rs2_option get_sensor_option(const rs2::sensor& sensor)
     {
         rs2_option option_type = static_cast<rs2_option>(i);
         //SDK enum types can be streamed to get a string that represents them
-        std::cout << "  " << i << ": " << option_type;
+        cout << "  " << i << ": " << option_type;
 
         // To control an option, use the following api:
 
         // First, verify that the sensor actually supports this option
         if (sensor.supports(option_type))
         {
-            std::cout << std::endl;
+            cout << endl;
 
             // Get a human readable description of the option
             const char* description = sensor.get_option_description(option_type);
-            std::cout << "       Description   : " << description << std::endl;
+            cout << "       Description   : " << description << endl;
 
             // Get the current value of the option
             float current_value = sensor.get_option(option_type);
-            std::cout << "       Current Value : " << current_value << std::endl;
+            cout << "       Current Value : " << current_value << endl;
 
             //To change the value of an option, please follow the change_sensor_option() function
         }
         else
         {
-            std::cout << " is not supported" << std::endl;
+            cout << " is not supported" << endl;
         }
     }
 
@@ -124,8 +126,8 @@ int main(int argc, char **argv) {
     cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F); //, 400);
 
     // IMU callback
-    std::mutex imu_mutex;
-    std::condition_variable cond_image_rec;
+    mutex imu_mutex;
+    condition_variable cond_image_rec;
 
     vector<double> v_gyro_timestamp;
     vector<rs2_vector> v_gyro_data;
@@ -140,7 +142,7 @@ int main(int argc, char **argv) {
 
     auto imu_callback = [&](const rs2::frame& frame)
     {
-        std::unique_lock<std::mutex> lock(imu_mutex);
+        unique_lock<mutex> lock(imu_mutex);
 
         if(rs2::frameset fs = frame.as<rs2::frameset>())
         {
@@ -204,18 +206,18 @@ int main(int argc, char **argv) {
     cv::namedWindow("cam0",cv::WINDOW_AUTOSIZE);
 
     while (b_continue_session){
-        std::vector<rs2_vector> vGyro;
-        std::vector<double> vGyro_times;
-        std::vector<rs2_vector> vAccel, vAccel_Sync;
-        std::vector<double> vAccel_times;
+        vector<rs2_vector> vGyro;
+        vector<double> vGyro_times;
+        vector<rs2_vector> vAccel, vAccel_Sync;
+        vector<double> vAccel_times;
         double imTs;
         {
             {
-                std::unique_lock<std::mutex> lk(imu_mutex);
+                unique_lock<mutex> lk(imu_mutex);
                 if (!image_ready) // wait until image read from the other thread
                     cond_image_rec.wait(lk);
             }
-            std::lock_guard<std::mutex> lk(imu_mutex);
+            lock_guard<mutex> lk(imu_mutex);
 
             // Copy the IMU data to local single thread variables
             vGyro = v_gyro_data;
@@ -267,11 +269,11 @@ int main(int argc, char **argv) {
         //assert(vGyro.size() == vGyro_times.size());
 
         for(int i=0; i<vAccel.size(); ++i){
-            accFile << std::setprecision(15) << vAccel_times[i] << "," << vAccel[i].x << "," << vAccel[i].y << "," << vAccel[i].z << endl;
+            accFile << setprecision(15) << vAccel_times[i] << "," << vAccel[i].x << "," << vAccel[i].y << "," << vAccel[i].z << endl;
         }
 
         for(int i=0; i<vGyro.size(); ++i){
-            gyroFile << std::setprecision(15) << vGyro_times[i] << "," << vGyro[i].x << "," << vGyro[i].y << "," << vGyro[i].z << endl;
+            gyroFile << setprecision(15) << vGyro_times[i] << "," << vGyro[i].x << "," << vGyro[i].y << "," << vGyro[i].z << endl;
         }
 
         cv::waitKey(10);

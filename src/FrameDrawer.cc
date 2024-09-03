@@ -16,13 +16,15 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "FrameDrawer.h"
 #include "Tracking.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include<mutex>
+#include <mutex>
 
 namespace ORB_SLAM3
 {

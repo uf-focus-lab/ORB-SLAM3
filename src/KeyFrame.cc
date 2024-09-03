@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ImuTypes.h"
@@ -491,7 +493,7 @@ void KeyFrame::ChangeParent(KeyFrame *pKF)
     if(pKF == this)
     {
         cout << "ERROR: Change parent KF, the parent and child are the same KF" << endl;
-        throw std::invalid_argument("The parent and child can not be the same");
+        throw invalid_argument("The parent and child can not be the same");
     }
 
     mpParent = pKF;
@@ -859,7 +861,7 @@ void KeyFrame::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricC
     }
     // Save the id of each connected KF with it weight
     mBackupConnectedKeyFrameIdWeights.clear();
-    for(std::map<KeyFrame*,int>::const_iterator it = mConnectedKeyFrameWeights.begin(), end = mConnectedKeyFrameWeights.end(); it != end; ++it)
+    for(map<KeyFrame*,int>::const_iterator it = mConnectedKeyFrameWeights.begin(), end = mConnectedKeyFrameWeights.end(); it != end; ++it)
     {
         if(spKF.find(it->first) != spKF.end())
             mBackupConnectedKeyFrameIdWeights[it->first->mnId] = it->second;

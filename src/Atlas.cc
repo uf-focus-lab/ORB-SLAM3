@@ -16,11 +16,13 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "Atlas.h"
 #include "Viewer.h"
 
 #include "GeometricCamera.h"
-#include "Pinhole.h"
+#include "CameraModels/Pinhole.h"
 #include "KannalaBrandt8.h"
 
 namespace ORB_SLAM3
@@ -38,7 +40,7 @@ Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
 
 Atlas::~Atlas()
 {
-    for(std::set<Map*>::iterator it = mspMaps.begin(), end = mspMaps.end(); it != end;)
+    for(set<Map*>::iterator it = mspMaps.begin(), end = mspMaps.end(); it != end;)
     {
         Map* pMi = *it;
 
@@ -120,8 +122,8 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
     for(size_t i=0; i < mvpCameras.size(); ++i)
     {
         GeometricCamera* pCam_i = mvpCameras[i];
-        if(!pCam) std::cout << "Not pCam" << std::endl;
-        if(!pCam_i) std::cout << "Not pCam_i" << std::endl;
+        if(!pCam) cout << "Not pCam" << endl;
+        if(!pCam_i) cout << "Not pCam_i" << endl;
         if(pCam->GetType() != pCam_i->GetType())
             continue;
 
@@ -153,12 +155,12 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
     }
 }
 
-std::vector<GeometricCamera*> Atlas::GetAllCameras()
+vector<GeometricCamera*> Atlas::GetAllCameras()
 {
     return mvpCameras;
 }
 
-void Atlas::SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs)
+void Atlas::SetReferenceMapPoints(const vector<MapPoint*> &vpMPs)
 {
     unique_lock<mutex> lock(mMutexAtlas);
     mpCurrentMap->SetReferenceMapPoints(vpMPs);
@@ -188,19 +190,19 @@ long unsigned Atlas::KeyFramesInMap()
     return mpCurrentMap->KeyFramesInMap();
 }
 
-std::vector<KeyFrame*> Atlas::GetAllKeyFrames()
+vector<KeyFrame*> Atlas::GetAllKeyFrames()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllKeyFrames();
 }
 
-std::vector<MapPoint*> Atlas::GetAllMapPoints()
+vector<MapPoint*> Atlas::GetAllMapPoints()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllMapPoints();
 }
 
-std::vector<MapPoint*> Atlas::GetReferenceMapPoints()
+vector<MapPoint*> Atlas::GetReferenceMapPoints()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetReferenceMapPoints();
@@ -236,7 +238,7 @@ void Atlas::clearMap()
 void Atlas::clearAtlas()
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
+    /*for(set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
     {
         (*it)->clear();
         delete *it;
@@ -313,10 +315,10 @@ void Atlas::PreSave()
             return elem1->GetId() < elem2->GetId();
         }
     };
-    std::copy(mspMaps.begin(), mspMaps.end(), std::back_inserter(mvpBackupMaps));
+    copy(mspMaps.begin(), mspMaps.end(), back_inserter(mvpBackupMaps));
     sort(mvpBackupMaps.begin(), mvpBackupMaps.end(), compFunctor());
 
-    std::set<GeometricCamera*> spCams(mvpCameras.begin(), mvpCameras.end());
+    set<GeometricCamera*> spCams(mvpCameras.begin(), mvpCameras.end());
     for(Map* pMi : mvpBackupMaps)
     {
         if(!pMi || pMi->IsBad())

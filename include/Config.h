@@ -15,9 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef CONFIG_H
 #define CONFIG_H
+
+using namespace std;
 
 #include <unistd.h>
 #include <stdio.h>
@@ -51,7 +52,7 @@ class IMUConfig
 class ConfigParser
 {
 public:
-    bool ParseConfigFile(std::string &strConfigFile);
+    bool ParseConfigFile(string &strConfigFile);
 
 private:
 

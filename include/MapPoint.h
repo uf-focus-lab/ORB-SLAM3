@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef MAPPOINT_H
 #define MAPPOINT_H
+
+using namespace std;
 
 #include "KeyFrame.h"
 #include "Frame.h"
@@ -119,13 +119,13 @@ public:
 
     KeyFrame* GetReferenceKeyFrame();
 
-    std::map<KeyFrame*,std::tuple<int,int>> GetObservations();
+    map<KeyFrame*,tuple<int,int>> GetObservations();
     int Observations();
 
     void AddObservation(KeyFrame* pKF,int idx);
     void EraseObservation(KeyFrame* pKF);
 
-    std::tuple<int,int> GetIndexInKeyFrame(KeyFrame* pKF);
+    tuple<int,int> GetIndexInKeyFrame(KeyFrame* pKF);
     bool IsInKeyFrame(KeyFrame* pKF);
 
     void SetBadFlag();
@@ -203,7 +203,7 @@ public:
     double mInitV;
     KeyFrame* mpHostKF;
 
-    static std::mutex mGlobalMutex;
+    static mutex mGlobalMutex;
 
     unsigned int mnOriginMapId;
 
@@ -213,10 +213,10 @@ protected:
      Eigen::Vector3f mWorldPos;
 
      // Keyframes observing the point and associated index in keyframe
-     std::map<KeyFrame*,std::tuple<int,int> > mObservations;
+     map<KeyFrame*,tuple<int,int> > mObservations;
      // For save relation without pointer, this is necessary for save/load function
-     std::map<long unsigned int, int> mBackupObservationsId1;
-     std::map<long unsigned int, int> mBackupObservationsId2;
+     map<long unsigned int, int> mBackupObservationsId1;
+     map<long unsigned int, int> mBackupObservationsId2;
 
      // Mean viewing direction
      Eigen::Vector3f mNormalVector;
@@ -245,9 +245,9 @@ protected:
      Map* mpMap;
 
      // Mutex
-     std::mutex mMutexPos;
-     std::mutex mMutexFeatures;
-     std::mutex mMutexMap;
+     mutex mMutexPos;
+     mutex mMutexFeatures;
+     mutex mMutexMap;
 
 };
 

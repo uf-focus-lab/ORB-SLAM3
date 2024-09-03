@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -37,7 +39,7 @@ MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* sett
 
         if(!is_correct)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            cerr << "**ERROR in the config file, the format is not correct**" << endl;
             try
             {
                 throw -1;
@@ -70,7 +72,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.KeyFrameSize parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.KeyFrameSize parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -81,7 +83,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.KeyFrameLineWidth parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.KeyFrameLineWidth parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -92,7 +94,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.GraphLineWidth parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.GraphLineWidth parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -103,7 +105,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.PointSize parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.PointSize parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -114,7 +116,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.CameraSize parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.CameraSize parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -125,7 +127,7 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.CameraLineWidth parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.CameraLineWidth parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -183,8 +185,8 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
 
     Map* pActiveMap = mpAtlas->GetCurrentMap();
     // DEBUG LBA
-    std::set<long unsigned int> sOptKFs = pActiveMap->msOptKFs;
-    std::set<long unsigned int> sFixedKFs = pActiveMap->msFixedKFs;
+    set<long unsigned int> sOptKFs = pActiveMap->msOptKFs;
+    set<long unsigned int> sFixedKFs = pActiveMap->msFixedKFs;
 
     if(!pActiveMap)
         return;

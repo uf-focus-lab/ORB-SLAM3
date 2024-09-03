@@ -16,16 +16,18 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "ORBmatcher.h"
 
-#include<limits.h>
+#include <limits.h>
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
-#include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include <DBoW2/FeatureVector.h>
 
-#include<stdint-gcc.h>
+#include <stdint-gcc.h>
 
 using namespace std;
 
@@ -531,8 +533,8 @@ namespace ORB_SLAM3
         return nmatches;
     }
 
-    int ORBmatcher::SearchByProjection(KeyFrame* pKF, Sophus::Sim3<float> &Scw, const std::vector<MapPoint*> &vpPoints, const std::vector<KeyFrame*> &vpPointsKFs,
-                                       std::vector<MapPoint*> &vpMatched, std::vector<KeyFrame*> &vpMatchedKF, int th, float ratioHamming)
+    int ORBmatcher::SearchByProjection(KeyFrame* pKF, Sophus::Sim3<float> &Scw, const vector<MapPoint*> &vpPoints, const vector<KeyFrame*> &vpPointsKFs,
+                                       vector<MapPoint*> &vpMatched, vector<KeyFrame*> &vpMatchedKF, int th, float ratioHamming)
     {
         // Get Calibration Parameters for later projection
         const float &fx = pKF->fx;
@@ -1454,7 +1456,7 @@ namespace ORB_SLAM3
         return nFused;
     }
 
-    int ORBmatcher::SearchBySim3(KeyFrame* pKF1, KeyFrame* pKF2, std::vector<MapPoint *> &vpMatches12, const Sophus::Sim3f &S12, const float th)
+    int ORBmatcher::SearchBySim3(KeyFrame* pKF1, KeyFrame* pKF2, vector<MapPoint *> &vpMatches12, const Sophus::Sim3f &S12, const float th)
     {
         const float &fx = pKF1->fx;
         const float &fy = pKF1->fy;

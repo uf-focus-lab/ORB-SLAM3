@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "Viewer.h"
 #include <pangolin/pangolin.h>
@@ -40,7 +42,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
 
         if(!is_correct)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            cerr << "**ERROR in the config file, the format is not correct**" << endl;
             try
             {
                 throw -1;
@@ -91,7 +93,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Camera.width parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Camera.width parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -102,7 +104,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Camera.height parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Camera.height parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -119,7 +121,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.ViewpointX parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.ViewpointX parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -130,7 +132,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.ViewpointY parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.ViewpointY parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -141,7 +143,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.ViewpointZ parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.ViewpointZ parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -152,7 +154,7 @@ bool Viewer::ParseViewerParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Viewer.ViewpointF parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*Viewer.ViewpointF parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 

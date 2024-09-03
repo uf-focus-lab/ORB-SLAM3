@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 /******************************************************************************
 * Author:   Steffen Urban                                              *
 * Contact:  urbste@gmail.com                                          *
@@ -52,8 +54,8 @@
 #include "MapPoint.h"
 #include "Frame.h"
 
-#include<Eigen/Dense>
-#include<Eigen/Sparse>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 namespace ORB_SLAM3{
     class MLPnPsolver {
@@ -79,7 +81,7 @@ namespace ORB_SLAM3{
         typedef Eigen::Vector3d bearingVector_t;
 
         /** An array of bearing-vectors */
-        typedef std::vector<bearingVector_t, Eigen::aligned_allocator<bearingVector_t> >
+        typedef vector<bearingVector_t, Eigen::aligned_allocator<bearingVector_t> >
                 bearingVectors_t;
 
         /** A 2-matrix containing the 2D covariance information of a bearing vector
@@ -90,21 +92,21 @@ namespace ORB_SLAM3{
         typedef Eigen::Matrix3d cov3_mat_t;
 
         /** An array of 3D covariance matrices */
-        typedef std::vector<cov3_mat_t, Eigen::aligned_allocator<cov3_mat_t> >
+        typedef vector<cov3_mat_t, Eigen::aligned_allocator<cov3_mat_t> >
                 cov3_mats_t;
 
         /** A 3-vector describing a point in 3D-space */
         typedef Eigen::Vector3d point_t;
 
         /** An array of 3D-points */
-        typedef std::vector<point_t, Eigen::aligned_allocator<point_t> >
+        typedef vector<point_t, Eigen::aligned_allocator<point_t> >
                 points_t;
 
         /** A homogeneous 3-vector describing a point in 3D-space */
         typedef Eigen::Vector4d point4_t;
 
         /** An array of homogeneous 3D-points */
-        typedef std::vector<point4_t, Eigen::aligned_allocator<point4_t> >
+        typedef vector<point4_t, Eigen::aligned_allocator<point4_t> >
                 points4_t;
 
         /** A 3-vector containing the rodrigues parameters of a rotation matrix */
@@ -139,19 +141,19 @@ namespace ORB_SLAM3{
                 const bearingVectors_t & f,
                 const points_t & p,
                 const cov3_mats_t & covMats,
-                const std::vector<int>& indices,
+                const vector<int>& indices,
                 transformation_t & result);
 
         void mlpnp_gn(Eigen::VectorXd& x,
                       const points_t& pts,
-                      const std::vector<Eigen::MatrixXd>& nullspaces,
+                      const vector<Eigen::MatrixXd>& nullspaces,
                       const Eigen::SparseMatrix<double> Kll,
                       bool use_cov);
 
         void mlpnp_residuals_and_jacs(
                 const Eigen::VectorXd& x,
                 const points_t& pts,
-                const std::vector<Eigen::MatrixXd>& nullspaces,
+                const vector<Eigen::MatrixXd>& nullspaces,
                 Eigen::VectorXd& r,
                 Eigen::MatrixXd& fjac,
                 bool getJacs);

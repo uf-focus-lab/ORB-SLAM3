@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "Settings.h"
 
 #include "CameraModels/Pinhole.h"
@@ -33,21 +35,21 @@ using namespace std;
 namespace ORB_SLAM3 {
 
     template<>
-    float Settings::readParameter<float>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+    float Settings::readParameter<float>(cv::FileStorage& fSettings, const string& name, bool& found, const bool required){
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
-                std::cerr << name << " required parameter does not exist, aborting..." << std::endl;
+                cerr << name << " required parameter does not exist, aborting..." << endl;
                 exit(-1);
             }
             else{
-                std::cerr << name << " optional parameter does not exist..." << std::endl;
+                cerr << name << " optional parameter does not exist..." << endl;
                 found = false;
                 return 0.0f;
             }
         }
         else if(!node.isReal()){
-            std::cerr << name << " parameter must be a real number, aborting..." << std::endl;
+            cerr << name << " parameter must be a real number, aborting..." << endl;
             exit(-1);
         }
         else{
@@ -57,21 +59,21 @@ namespace ORB_SLAM3 {
     }
 
     template<>
-    int Settings::readParameter<int>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+    int Settings::readParameter<int>(cv::FileStorage& fSettings, const string& name, bool& found, const bool required){
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
-                std::cerr << name << " required parameter does not exist, aborting..." << std::endl;
+                cerr << name << " required parameter does not exist, aborting..." << endl;
                 exit(-1);
             }
             else{
-                std::cerr << name << " optional parameter does not exist..." << std::endl;
+                cerr << name << " optional parameter does not exist..." << endl;
                 found = false;
                 return 0;
             }
         }
         else if(!node.isInt()){
-            std::cerr << name << " parameter must be an integer number, aborting..." << std::endl;
+            cerr << name << " parameter must be an integer number, aborting..." << endl;
             exit(-1);
         }
         else{
@@ -81,21 +83,21 @@ namespace ORB_SLAM3 {
     }
 
     template<>
-    string Settings::readParameter<string>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+    string Settings::readParameter<string>(cv::FileStorage& fSettings, const string& name, bool& found, const bool required){
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
-                std::cerr << name << " required parameter does not exist, aborting..." << std::endl;
+                cerr << name << " required parameter does not exist, aborting..." << endl;
                 exit(-1);
             }
             else{
-                std::cerr << name << " optional parameter does not exist..." << std::endl;
+                cerr << name << " optional parameter does not exist..." << endl;
                 found = false;
                 return string();
             }
         }
         else if(!node.isString()){
-            std::cerr << name << " parameter must be a string, aborting..." << std::endl;
+            cerr << name << " parameter must be a string, aborting..." << endl;
             exit(-1);
         }
         else{
@@ -105,15 +107,15 @@ namespace ORB_SLAM3 {
     }
 
     template<>
-    cv::Mat Settings::readParameter<cv::Mat>(cv::FileStorage& fSettings, const std::string& name, bool& found, const bool required){
+    cv::Mat Settings::readParameter<cv::Mat>(cv::FileStorage& fSettings, const string& name, bool& found, const bool required){
         cv::FileNode node = fSettings[name];
         if(node.empty()){
             if(required){
-                std::cerr << name << " required parameter does not exist, aborting..." << std::endl;
+                cerr << name << " required parameter does not exist, aborting..." << endl;
                 exit(-1);
             }
             else{
-                std::cerr << name << " optional parameter does not exist..." << std::endl;
+                cerr << name << " optional parameter does not exist..." << endl;
                 found = false;
                 return cv::Mat();
             }
@@ -124,7 +126,7 @@ namespace ORB_SLAM3 {
         }
     }
 
-    Settings::Settings(const std::string &configFile, const int& sensor) :
+    Settings::Settings(const string &configFile, const int& sensor) :
     bNeedToUndistort_(false), bNeedToRectify_(false), bNeedToResize1_(false), bNeedToResize2_(false) {
         sensor_ = sensor;
 
@@ -526,7 +528,7 @@ namespace ORB_SLAM3 {
         }
     }
 
-    ostream &operator<<(std::ostream& output, const Settings& settings){
+    ostream &operator<<(ostream& output, const Settings& settings){
         output << "SLAM settings: " << endl;
 
         output << "\t-Camera 1 parameters (";

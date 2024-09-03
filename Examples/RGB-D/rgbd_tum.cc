@@ -16,14 +16,16 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<chrono>
+using namespace std;
 
-#include<opencv2/core/core.hpp>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <chrono>
 
-#include<System.h>
+#include <opencv2/core/core.hpp>
+
+#include <System.h>
 
 using namespace std;
 
@@ -95,21 +97,21 @@ int main(int argc, char **argv)
         }
 
 #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
 #else
-        std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t1 = chrono::monotonic_clock::now();
 #endif
 
         // Pass the image to the SLAM system
         SLAM.TrackRGBD(imRGB,imD,tframe);
 
 #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 #else
-        std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t2 = chrono::monotonic_clock::now();
 #endif
 
-        double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+        double ttrack= chrono::duration_cast<chrono::duration<double> >(t2 - t1).count();
 
         vTimesTrack[ni]=ttrack;
 

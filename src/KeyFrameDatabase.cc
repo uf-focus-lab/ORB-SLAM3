@@ -16,13 +16,15 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "KeyFrameDatabase.h"
 
 #include "KeyFrame.h"
-#include "Thirdparty/DBoW2/DBoW2/BowVector.h"
+#include <DBoW2/BowVector.h>
 
-#include<mutex>
+#include <mutex>
 
 using namespace std;
 
@@ -76,7 +78,7 @@ void KeyFrameDatabase::clearMap(Map* pMap)
     unique_lock<mutex> lock(mMutex);
 
     // Erase elements in the Inverse File for the entry
-    for(std::vector<list<KeyFrame*> >::iterator vit=mvInvertedFile.begin(), vend=mvInvertedFile.end(); vit!=vend; vit++)
+    for(vector<list<KeyFrame*> >::iterator vit=mvInvertedFile.begin(), vend=mvInvertedFile.end(); vit!=vend; vit++)
     {
         // List of keyframes that share the word
         list<KeyFrame*> &lKFs =  *vit;

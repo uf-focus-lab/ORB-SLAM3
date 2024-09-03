@@ -108,7 +108,7 @@ Directory `Examples` contains several demo programs and calibration files to run
 4. Run ORB-SLAM3. For example, for our D435i camera, we would execute:
 
 ```
-./Examples/Stereo-Inertial/stereo_inertial_realsense_D435i Vocabulary/ORBvoc.txt ./Examples/Stereo-Inertial/RealSense_D435i.yaml
+./Examples/Stereo-Inertial/stereo_inertial_realsense_D435i vocabulary/ORBvoc.txt ./Examples/Stereo-Inertial/RealSense_D435i.yaml
 ```
 
 # 5. EuRoC Examples
@@ -214,7 +214,7 @@ For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_regist
   ```
   
   ```
-  rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml true
+  rosrun ORB_SLAM3 Stereo_Inertial vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml true
   ```
   
   ```

@@ -16,13 +16,15 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "Config.h"
 
 namespace ORB_SLAM3
 {
 
-bool ConfigParser::ParseConfigFile(std::string &strConfigFile)
+bool ConfigParser::ParseConfigFile(string &strConfigFile)
 {
     return true;
 }

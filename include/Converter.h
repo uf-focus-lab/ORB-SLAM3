@@ -15,19 +15,19 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
-#include<opencv2/core/core.hpp>
+using namespace std;
 
-#include<Eigen/Dense>
-#include"Thirdparty/g2o/g2o/types/types_six_dof_expmap.h"
-#include"Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include <opencv2/core/core.hpp>
 
-#include "Thirdparty/Sophus/sophus/geometry.hpp"
-#include "Thirdparty/Sophus/sophus/sim3.hpp"
+#include <Eigen/Dense>
+#include <g2o/types/sba/types_six_dof_expmap.h>
+#include <g2o/types/sim3/types_seven_dof_expmap.h>
+
+#include <sophus/geometry.hpp>
+#include <sophus/sim3.hpp>
 
 namespace ORB_SLAM3
 {
@@ -36,7 +36,7 @@ class Converter
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    static std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
+    static vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
 
     static g2o::SE3Quat toSE3Quat(const cv::Mat &cvT);
     static g2o::SE3Quat toSE3Quat(const Sophus::SE3f &T);
@@ -66,10 +66,10 @@ public:
     static Eigen::Matrix<double,4,4> toMatrix4d(const cv::Mat &cvMat4);
     static Eigen::Matrix<float,3,3> toMatrix3f(const cv::Mat &cvMat3);
     static Eigen::Matrix<float,4,4> toMatrix4f(const cv::Mat &cvMat4);
-    static std::vector<float> toQuaternion(const cv::Mat &M);
+    static vector<float> toQuaternion(const cv::Mat &M);
 
     static bool isRotationMatrix(const cv::Mat &R);
-    static std::vector<float> toEuler(const cv::Mat &R);
+    static vector<float> toEuler(const cv::Mat &R);
 
     //TODO: Sophus migration, to be deleted in the future
     static Sophus::SE3<float> toSophus(const cv::Mat& T);

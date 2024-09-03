@@ -16,10 +16,12 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include "MapPoint.h"
 #include "ORBmatcher.h"
 
-#include<mutex>
+#include <mutex>
 
 namespace ORB_SLAM3
 {
@@ -201,7 +203,7 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 }
 
 
-std::map<KeyFrame*, std::tuple<int,int>>  MapPoint::GetObservations()
+map<KeyFrame*, tuple<int,int>>  MapPoint::GetObservations()
 {
     unique_lock<mutex> lock(mMutexFeatures);
     return mObservations;
@@ -301,8 +303,8 @@ void MapPoint::Replace(MapPoint* pMP)
 
 bool MapPoint::isBad()
 {
-    unique_lock<mutex> lock1(mMutexFeatures,std::defer_lock);
-    unique_lock<mutex> lock2(mMutexPos,std::defer_lock);
+    unique_lock<mutex> lock1(mMutexFeatures,defer_lock);
+    unique_lock<mutex> lock2(mMutexPos,defer_lock);
     lock(lock1, lock2);
 
     return mbBad;
@@ -578,7 +580,7 @@ void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
     mBackupObservationsId1.clear();
     mBackupObservationsId2.clear();
     // Save the id and position in each KF who view it
-    for(std::map<KeyFrame*,std::tuple<int,int> >::const_iterator it = mObservations.begin(), end = mObservations.end(); it != end; ++it)
+    for(map<KeyFrame*,tuple<int,int> >::const_iterator it = mObservations.begin(), end = mObservations.end(); it != end; ++it)
     {
         KeyFrame* pKFi = it->first;
         if(spKF.find(pKFi) != spKF.end())
@@ -620,7 +622,7 @@ void MapPoint::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsi
     {
         KeyFrame* pKFi = mpKFid[it->first];
         map<long unsigned int, int>::const_iterator it2 = mBackupObservationsId2.find(it->first);
-        std::tuple<int, int> indexes = tuple<int,int>(it->second,it2->second);
+        tuple<int, int> indexes = tuple<int,int>(it->second,it2->second);
         if(pKFi)
         {
            mObservations[pKFi] = indexes;

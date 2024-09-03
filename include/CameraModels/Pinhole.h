@@ -15,9 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef CAMERAMODELS_PINHOLE_H
 #define CAMERAMODELS_PINHOLE_H
+
+using namespace std;
 
 #include <assert.h>
 
@@ -42,7 +43,7 @@ namespace ORB_SLAM3 {
             mnId=nNextId++;
             mnType = CAM_PINHOLE;
         }
-        Pinhole(const std::vector<float> _vParameters) : GeometricCamera(_vParameters), tvr(nullptr) {
+        Pinhole(const vector<float> _vParameters) : GeometricCamera(_vParameters), tvr(nullptr) {
             assert(mvParameters.size() == 4);
             mnId=nNextId++;
             mnType = CAM_PINHOLE;
@@ -72,8 +73,8 @@ namespace ORB_SLAM3 {
         Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D);
 
 
-        bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,
-                                             Sophus::SE3f &T21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated);
+        bool ReconstructWithTwoViews(const vector<cv::KeyPoint>& vKeys1, const vector<cv::KeyPoint>& vKeys2, const vector<int> &vMatches12,
+                                             Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated);
 
         cv::Mat toK();
         Eigen::Matrix3f toK_();
@@ -85,8 +86,8 @@ namespace ORB_SLAM3 {
                                  const float sigmaLevel1, const float sigmaLevel2,
                                  Eigen::Vector3f& x3Dtriangulated) { return false;}
 
-        friend std::ostream& operator<<(std::ostream& os, const Pinhole& ph);
-        friend std::istream& operator>>(std::istream& os, Pinhole& ph);
+        friend ostream& operator<<(ostream& os, const Pinhole& ph);
+        friend istream& operator>>(istream& os, Pinhole& ph);
 
         bool IsEqual(GeometricCamera* pCam);
     private:

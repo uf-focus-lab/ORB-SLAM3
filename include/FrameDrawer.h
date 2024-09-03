@@ -15,19 +15,19 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef FRAMEDRAWER_H
 #define FRAMEDRAWER_H
+
+using namespace std;
 
 #include "Tracking.h"
 #include "MapPoint.h"
 #include "Atlas.h"
 
-#include<opencv2/core/core.hpp>
-#include<opencv2/features2d/features2d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
-#include<mutex>
+#include <mutex>
 #include <unordered_set>
 
 
@@ -66,12 +66,12 @@ protected:
     vector<cv::KeyPoint> mvIniKeys;
     vector<int> mvIniMatches;
     int mState;
-    std::vector<float> mvCurrentDepth;
+    vector<float> mvCurrentDepth;
     float mThDepth;
 
     Atlas* mpAtlas;
 
-    std::mutex mMutex;
+    mutex mMutex;
     vector<pair<cv::Point2f, cv::Point2f> > mvTracks;
 
     Frame mCurrentFrame;

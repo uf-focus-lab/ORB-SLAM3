@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 #include <signal.h>
 #include <stdlib.h>
 #include <iostream>
@@ -93,8 +95,8 @@ int main(int argc, char **argv)
     cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
     cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
 
-    std::mutex imu_mutex;
-    std::condition_variable cond_image_rec;
+    mutex imu_mutex;
+    condition_variable cond_image_rec;
 
     vector<double> v_accel_timestamp;
     vector<rs2_vector> v_accel_data;
@@ -115,7 +117,7 @@ int main(int argc, char **argv)
     int count_im_buffer = 0; // count dropped frames
 
     auto imu_callback = [&](const rs2::frame& frame){
-        std::unique_lock<std::mutex> lock(imu_mutex);
+        unique_lock<mutex> lock(imu_mutex);
 
         if(rs2::frameset fs = frame.as<rs2::frameset>()){
             count_im_buffer++;
@@ -186,11 +188,11 @@ int main(int argc, char **argv)
     rs2::stream_profile imu_stream = pipe_profile.get_stream(RS2_STREAM_GYRO);
     float* Rbc = cam_stream.get_extrinsics_to(imu_stream).rotation;
     float* tbc = cam_stream.get_extrinsics_to(imu_stream).translation;
-    std::cout << "Tbc = " << std::endl;
+    cout << "Tbc = " << endl;
     for(int i = 0; i<3; i++){
         for(int j = 0; j<3; j++)
-            std::cout << Rbc[i*3 + j] << ", ";
-        std::cout << tbc[i] << "\n";
+            cout << Rbc[i*3 + j] << ", ";
+        cout << tbc[i] << "\n";
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -211,13 +213,13 @@ int main(int argc, char **argv)
     cv::Mat im_left, im_right;
 
     while (!SLAM.isShutDown()){
-        std::vector<rs2_vector> vGyro;
-        std::vector<double> vGyro_times;
-        std::vector<rs2_vector> vAccel;
-        std::vector<double> vAccel_times;
+        vector<rs2_vector> vGyro;
+        vector<double> vGyro_times;
+        vector<rs2_vector> vAccel;
+        vector<double> vAccel_times;
 
         {
-            std::unique_lock<std::mutex> lk(imu_mutex);
+            unique_lock<mutex> lk(imu_mutex);
             while(!image_ready)
                 cond_image_rec.wait(lk);
 
@@ -244,9 +246,9 @@ int main(int argc, char **argv)
             {
     #ifdef REGISTER_TIMES
         #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point t_Start_Resize = chrono::steady_clock::now();
         #else
-                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+                chrono::monotonic_clock::time_point t_Start_Resize = chrono::monotonic_clock::now();
         #endif
     #endif
                 int width = imCV.cols * imageScale;
@@ -255,11 +257,11 @@ int main(int argc, char **argv)
                 cv::resize(imCV_right, im_right, cv::Size(width, height));
     #ifdef REGISTER_TIMES
         #ifdef COMPILEDWITHC11
-                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+                chrono::steady_clock::time_point t_End_Resize = chrono::steady_clock::now();
         #else
-                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+                chrono::monotonic_clock::time_point t_End_Resize = chrono::monotonic_clock::now();
         #endif
-                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+                t_resize = chrono::duration_cast<chrono::duration<double,milli> >(t_End_Resize - t_Start_Resize).count();
                 SLAM.InsertResizeTime(t_resize);
     #endif
             }
@@ -295,20 +297,20 @@ int main(int argc, char **argv)
 
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_Start_Track = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t_Start_Track = chrono::steady_clock::now();
     #else
-        std::chrono::monotonic_clock::time_point t_Start_Track = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t_Start_Track = chrono::monotonic_clock::now();
     #endif
 #endif
         // Pass the image to the SLAM system
         SLAM.TrackStereo(im_left, im_right, timestamp, vImuMeas);
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t_End_Track = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point t_End_Track = chrono::steady_clock::now();
     #else
-        std::chrono::monotonic_clock::time_point t_End_Track = std::chrono::monotonic_clock::now();
+        chrono::monotonic_clock::time_point t_End_Track = chrono::monotonic_clock::now();
     #endif
-        t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
+        t_track = t_resize + chrono::duration_cast<chrono::duration<double,milli> >(t_End_Track - t_Start_Track).count();
         SLAM.InsertTrackTime(t_track);
 #endif
 

@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 /**
 * Software License Agreement (BSD License)
 *
@@ -442,11 +444,11 @@ namespace ORB_SLAM3
             sumFeatures += mnFeaturesPerLevel[level];
             nDesiredFeaturesPerScale *= factor;
         }
-        mnFeaturesPerLevel[nlevels-1] = std::max(nfeatures - sumFeatures, 0);
+        mnFeaturesPerLevel[nlevels-1] = max(nfeatures - sumFeatures, 0);
 
         const int npoints = 512;
         const Point* pattern0 = (const Point*)bit_pattern_31_;
-        std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
+        copy(pattern0, pattern0 + npoints, back_inserter(pattern));
 
         //This is for orientation
         // pre-compute the end of a row in a circular patch
@@ -895,7 +897,7 @@ namespace ORB_SLAM3
             computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
     }
 
-    void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allKeypoints)
+    void ORBextractor::ComputeKeyPointsOld(vector<vector<KeyPoint> > &allKeypoints)
     {
         allKeypoints.resize(nlevels);
 
@@ -1084,7 +1086,7 @@ namespace ORB_SLAM3
     }
 
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
+                                  OutputArray _descriptors, vector<int> &vLappingArea)
     {
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())

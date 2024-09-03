@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef SIM3SOLVER_H
 #define SIM3SOLVER_H
+
+using namespace std;
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -34,14 +34,14 @@ class Sim3Solver
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Sim3Solver(KeyFrame* pKF1, KeyFrame* pKF2, const std::vector<MapPoint*> &vpMatched12, const bool bFixScale = true,
+    Sim3Solver(KeyFrame* pKF1, KeyFrame* pKF2, const vector<MapPoint*> &vpMatched12, const bool bFixScale = true,
                const vector<KeyFrame*> vpKeyFrameMatchedMP = vector<KeyFrame*>());
 
     void SetRansacParameters(double probability = 0.99, int minInliers = 6 , int maxIterations = 300);
 
-    Eigen::Matrix4f find(std::vector<bool> &vbInliers12, int &nInliers);
+    Eigen::Matrix4f find(vector<bool> &vbInliers12, int &nInliers);
 
-    Eigen::Matrix4f iterate(int nIterations, bool &bNoMore, std::vector<bool> &vbInliers, int &nInliers);
+    Eigen::Matrix4f iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers);
     Eigen::Matrix4f iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers, bool &bConverge);
 
     Eigen::Matrix4f GetEstimatedTransformation();
@@ -57,8 +57,8 @@ protected:
 
     void CheckInliers();
 
-    void Project(const std::vector<Eigen::Vector3f> &vP3Dw, std::vector<Eigen::Vector2f> &vP2D, Eigen::Matrix4f Tcw, GeometricCamera* pCamera);
-    void FromCameraToImage(const std::vector<Eigen::Vector3f> &vP3Dc, std::vector<Eigen::Vector2f> &vP2D, GeometricCamera* pCamera);
+    void Project(const vector<Eigen::Vector3f> &vP3Dw, vector<Eigen::Vector2f> &vP2D, Eigen::Matrix4f Tcw, GeometricCamera* pCamera);
+    void FromCameraToImage(const vector<Eigen::Vector3f> &vP3Dc, vector<Eigen::Vector2f> &vP2D, GeometricCamera* pCamera);
 
 
 protected:
@@ -67,16 +67,16 @@ protected:
     KeyFrame* mpKF1;
     KeyFrame* mpKF2;
 
-    std::vector<Eigen::Vector3f> mvX3Dc1;
-    std::vector<Eigen::Vector3f> mvX3Dc2;
-    std::vector<MapPoint*> mvpMapPoints1;
-    std::vector<MapPoint*> mvpMapPoints2;
-    std::vector<MapPoint*> mvpMatches12;
-    std::vector<size_t> mvnIndices1;
-    std::vector<size_t> mvSigmaSquare1;
-    std::vector<size_t> mvSigmaSquare2;
-    std::vector<size_t> mvnMaxError1;
-    std::vector<size_t> mvnMaxError2;
+    vector<Eigen::Vector3f> mvX3Dc1;
+    vector<Eigen::Vector3f> mvX3Dc2;
+    vector<MapPoint*> mvpMapPoints1;
+    vector<MapPoint*> mvpMapPoints2;
+    vector<MapPoint*> mvpMatches12;
+    vector<size_t> mvnIndices1;
+    vector<size_t> mvSigmaSquare1;
+    vector<size_t> mvSigmaSquare2;
+    vector<size_t> mvnMaxError1;
+    vector<size_t> mvnMaxError2;
 
     int N;
     int mN1;
@@ -87,12 +87,12 @@ protected:
     float ms12i;
     Eigen::Matrix4f mT12i;
     Eigen::Matrix4f mT21i;
-    std::vector<bool> mvbInliersi;
+    vector<bool> mvbInliersi;
     int mnInliersi;
 
     // Current Ransac State
     int mnIterations;
-    std::vector<bool> mvbBestInliers;
+    vector<bool> mvbBestInliers;
     int mnBestInliers;
     Eigen::Matrix4f mBestT12;
     Eigen::Matrix3f mBestRotation;
@@ -103,11 +103,11 @@ protected:
     bool mbFixScale;
 
     // Indices for random selection
-    std::vector<size_t> mvAllIndices;
+    vector<size_t> mvAllIndices;
 
     // Projections
-    std::vector<Eigen::Vector2f> mvP1im1;
-    std::vector<Eigen::Vector2f> mvP2im2;
+    vector<Eigen::Vector2f> mvP1im1;
+    vector<Eigen::Vector2f> mvP2im2;
 
     // RANSAC probability
     double mRansacProb;

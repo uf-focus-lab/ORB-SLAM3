@@ -15,10 +15,10 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #ifndef TRACKING_H
 #define TRACKING_H
+
+using namespace std;
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -59,7 +59,7 @@ class Tracking
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
-             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq=std::string());
+             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq=string());
 
     ~Tracking();
 
@@ -95,7 +95,7 @@ public:
     }
 
     void CreateMapInAtlas();
-    //std::mutex mMutexTracks;
+    //mutex mMutexTracks;
 
     //--
     void NewDataset();
@@ -141,10 +141,10 @@ public:
     cv::Mat mImGray;
 
     // Initialization Variables (Monocular)
-    std::vector<int> mvIniLastMatches;
-    std::vector<int> mvIniMatches;
-    std::vector<cv::Point2f> mvbPrevMatched;
-    std::vector<cv::Point3f> mvIniP3D;
+    vector<int> mvIniLastMatches;
+    vector<int> mvIniMatches;
+    vector<cv::Point2f> mvbPrevMatched;
+    vector<cv::Point3f> mvIniP3D;
     Frame mInitialFrame;
 
     // Lists used to recover the full camera trajectory at the end of the execution.
@@ -235,11 +235,11 @@ protected:
     IMU::Preintegrated *mpImuPreintegratedFromLastKF;
 
     // Queue of IMU measurements between frames
-    std::list<IMU::Point> mlQueueImuData;
+    list<IMU::Point> mlQueueImuData;
 
     // Vector of IMU measurements from previous to current frame (to be filled by PreintegrateIMU)
-    std::vector<IMU::Point> mvImuFromLastFrame;
-    std::mutex mMutexImuQueue;
+    vector<IMU::Point> mvImuFromLastFrame;
+    mutex mMutexImuQueue;
 
     // Imu calibration parameters
     IMU::Calib *mpImuCalib;
@@ -271,8 +271,8 @@ protected:
 
     //Local Map
     KeyFrame* mpReferenceKF;
-    std::vector<KeyFrame*> mvpLocalKeyFrames;
-    std::vector<MapPoint*> mvpLocalMapPoints;
+    vector<KeyFrame*> mvpLocalKeyFrames;
+    vector<MapPoint*> mvpLocalMapPoints;
     
     // System
     System* mpSystem;
@@ -363,7 +363,7 @@ protected:
     bool mbStopped;
     bool mbStopRequested;
     bool mbNotStop;
-    std::mutex mMutexStop;
+    mutex mMutexStop;
 #endif
 
 public:

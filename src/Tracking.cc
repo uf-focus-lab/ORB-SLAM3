@@ -16,6 +16,8 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+using namespace std;
+
 
 #include "Tracking.h"
 
@@ -24,7 +26,7 @@
 #include "Converter.h"
 #include "G2oTypes.h"
 #include "Optimizer.h"
-#include "Pinhole.h"
+#include "CameraModels/Pinhole.h"
 #include "KannalaBrandt8.h"
 #include "MLPnPsolver.h"
 #include "GeometricTools.h"
@@ -58,14 +60,14 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         bool b_parse_cam = ParseCamParamFile(fSettings);
         if(!b_parse_cam)
         {
-            std::cout << "*Error with the camera parameters in the config file*" << std::endl;
+            cout << "*Error with the camera parameters in the config file*" << endl;
         }
 
         // Load ORB parameters
         bool b_parse_orb = ParseORBParamFile(fSettings);
         if(!b_parse_orb)
         {
-            std::cout << "*Error with the ORB parameters in the config file*" << std::endl;
+            cout << "*Error with the ORB parameters in the config file*" << endl;
         }
 
         bool b_parse_imu = true;
@@ -74,7 +76,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
             b_parse_imu = ParseIMUParamFile(fSettings);
             if(!b_parse_imu)
             {
-                std::cout << "*Error with the IMU parameters in the config file*" << std::endl;
+                cout << "*Error with the IMU parameters in the config file*" << endl;
             }
 
             mnFramesToResetIMU = mMaxFrames;
@@ -82,7 +84,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
         if(!b_parse_cam || !b_parse_orb || !b_parse_imu)
         {
-            std::cerr << "**ERROR in the config file, the format is not correct**" << std::endl;
+            cerr << "**ERROR in the config file, the format is not correct**" << endl;
             try
             {
                 throw -1;
@@ -99,21 +101,21 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mnNumDataset = 0;
 
     vector<GeometricCamera*> vpCams = mpAtlas->GetAllCameras();
-    std::cout << "There are " << vpCams.size() << " cameras in the atlas" << std::endl;
+    cout << "There are " << vpCams.size() << " cameras in the atlas" << endl;
     for(GeometricCamera* pCam : vpCams)
     {
-        std::cout << "Camera " << pCam->GetId();
+        cout << "Camera " << pCam->GetId();
         if(pCam->GetType() == GeometricCamera::CAM_PINHOLE)
         {
-            std::cout << " is pinhole" << std::endl;
+            cout << " is pinhole" << endl;
         }
         else if(pCam->GetType() == GeometricCamera::CAM_FISHEYE)
         {
-            std::cout << " is fisheye" << std::endl;
+            cout << " is fisheye" << endl;
         }
         else
         {
-            std::cout << " is unknown" << std::endl;
+            cout << " is unknown" << endl;
         }
     }
 
@@ -271,145 +273,145 @@ void Tracking::PrintTimeStats()
     f.open("ExecMean.txt");
     f << fixed;
     //Report the mean and std of each one
-    std::cout << std::endl << " TIME STATS in ms (mean$\\pm$std)" << std::endl;
-    f << " TIME STATS in ms (mean$\\pm$std)" << std::endl;
+    cout << endl << " TIME STATS in ms (mean$\\pm$std)" << endl;
+    f << " TIME STATS in ms (mean$\\pm$std)" << endl;
     cout << "OpenCV version: " << CV_VERSION << endl;
     f << "OpenCV version: " << CV_VERSION << endl;
-    std::cout << "---------------------------" << std::endl;
-    std::cout << "Tracking" << std::setprecision(5) << std::endl << std::endl;
-    f << "---------------------------" << std::endl;
-    f << "Tracking" << std::setprecision(5) << std::endl << std::endl;
+    cout << "---------------------------" << endl;
+    cout << "Tracking" << setprecision(5) << endl << endl;
+    f << "---------------------------" << endl;
+    f << "Tracking" << setprecision(5) << endl << endl;
     double average, deviation;
     if(!vdRectStereo_ms.empty())
     {
         average = calcAverage(vdRectStereo_ms);
         deviation = calcDeviation(vdRectStereo_ms, average);
-        std::cout << "Stereo Rectification: " << average << "$\\pm$" << deviation << std::endl;
-        f << "Stereo Rectification: " << average << "$\\pm$" << deviation << std::endl;
+        cout << "Stereo Rectification: " << average << "$\\pm$" << deviation << endl;
+        f << "Stereo Rectification: " << average << "$\\pm$" << deviation << endl;
     }
 
     if(!vdResizeImage_ms.empty())
     {
         average = calcAverage(vdResizeImage_ms);
         deviation = calcDeviation(vdResizeImage_ms, average);
-        std::cout << "Image Resize: " << average << "$\\pm$" << deviation << std::endl;
-        f << "Image Resize: " << average << "$\\pm$" << deviation << std::endl;
+        cout << "Image Resize: " << average << "$\\pm$" << deviation << endl;
+        f << "Image Resize: " << average << "$\\pm$" << deviation << endl;
     }
 
     average = calcAverage(vdORBExtract_ms);
     deviation = calcDeviation(vdORBExtract_ms, average);
-    std::cout << "ORB Extraction: " << average << "$\\pm$" << deviation << std::endl;
-    f << "ORB Extraction: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "ORB Extraction: " << average << "$\\pm$" << deviation << endl;
+    f << "ORB Extraction: " << average << "$\\pm$" << deviation << endl;
 
     if(!vdStereoMatch_ms.empty())
     {
         average = calcAverage(vdStereoMatch_ms);
         deviation = calcDeviation(vdStereoMatch_ms, average);
-        std::cout << "Stereo Matching: " << average << "$\\pm$" << deviation << std::endl;
-        f << "Stereo Matching: " << average << "$\\pm$" << deviation << std::endl;
+        cout << "Stereo Matching: " << average << "$\\pm$" << deviation << endl;
+        f << "Stereo Matching: " << average << "$\\pm$" << deviation << endl;
     }
 
     if(!vdIMUInteg_ms.empty())
     {
         average = calcAverage(vdIMUInteg_ms);
         deviation = calcDeviation(vdIMUInteg_ms, average);
-        std::cout << "IMU Preintegration: " << average << "$\\pm$" << deviation << std::endl;
-        f << "IMU Preintegration: " << average << "$\\pm$" << deviation << std::endl;
+        cout << "IMU Preintegration: " << average << "$\\pm$" << deviation << endl;
+        f << "IMU Preintegration: " << average << "$\\pm$" << deviation << endl;
     }
 
     average = calcAverage(vdPosePred_ms);
     deviation = calcDeviation(vdPosePred_ms, average);
-    std::cout << "Pose Prediction: " << average << "$\\pm$" << deviation << std::endl;
-    f << "Pose Prediction: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "Pose Prediction: " << average << "$\\pm$" << deviation << endl;
+    f << "Pose Prediction: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(vdLMTrack_ms);
     deviation = calcDeviation(vdLMTrack_ms, average);
-    std::cout << "LM Track: " << average << "$\\pm$" << deviation << std::endl;
-    f << "LM Track: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "LM Track: " << average << "$\\pm$" << deviation << endl;
+    f << "LM Track: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(vdNewKF_ms);
     deviation = calcDeviation(vdNewKF_ms, average);
-    std::cout << "New KF decision: " << average << "$\\pm$" << deviation << std::endl;
-    f << "New KF decision: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "New KF decision: " << average << "$\\pm$" << deviation << endl;
+    f << "New KF decision: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(vdTrackTotal_ms);
     deviation = calcDeviation(vdTrackTotal_ms, average);
-    std::cout << "Total Tracking: " << average << "$\\pm$" << deviation << std::endl;
-    f << "Total Tracking: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "Total Tracking: " << average << "$\\pm$" << deviation << endl;
+    f << "Total Tracking: " << average << "$\\pm$" << deviation << endl;
 
     // Local Mapping time stats
-    std::cout << std::endl << std::endl << std::endl;
-    std::cout << "Local Mapping" << std::endl << std::endl;
-    f << std::endl << "Local Mapping" << std::endl << std::endl;
+    cout << endl << endl << endl;
+    cout << "Local Mapping" << endl << endl;
+    f << endl << "Local Mapping" << endl << endl;
 
     average = calcAverage(mpLocalMapper->vdKFInsert_ms);
     deviation = calcDeviation(mpLocalMapper->vdKFInsert_ms, average);
-    std::cout << "KF Insertion: " << average << "$\\pm$" << deviation << std::endl;
-    f << "KF Insertion: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "KF Insertion: " << average << "$\\pm$" << deviation << endl;
+    f << "KF Insertion: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vdMPCulling_ms);
     deviation = calcDeviation(mpLocalMapper->vdMPCulling_ms, average);
-    std::cout << "MP Culling: " << average << "$\\pm$" << deviation << std::endl;
-    f << "MP Culling: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "MP Culling: " << average << "$\\pm$" << deviation << endl;
+    f << "MP Culling: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vdMPCreation_ms);
     deviation = calcDeviation(mpLocalMapper->vdMPCreation_ms, average);
-    std::cout << "MP Creation: " << average << "$\\pm$" << deviation << std::endl;
-    f << "MP Creation: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "MP Creation: " << average << "$\\pm$" << deviation << endl;
+    f << "MP Creation: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vdLBA_ms);
     deviation = calcDeviation(mpLocalMapper->vdLBA_ms, average);
-    std::cout << "LBA: " << average << "$\\pm$" << deviation << std::endl;
-    f << "LBA: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "LBA: " << average << "$\\pm$" << deviation << endl;
+    f << "LBA: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vdKFCulling_ms);
     deviation = calcDeviation(mpLocalMapper->vdKFCulling_ms, average);
-    std::cout << "KF Culling: " << average << "$\\pm$" << deviation << std::endl;
-    f << "KF Culling: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "KF Culling: " << average << "$\\pm$" << deviation << endl;
+    f << "KF Culling: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vdLMTotal_ms);
     deviation = calcDeviation(mpLocalMapper->vdLMTotal_ms, average);
-    std::cout << "Total Local Mapping: " << average << "$\\pm$" << deviation << std::endl;
-    f << "Total Local Mapping: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "Total Local Mapping: " << average << "$\\pm$" << deviation << endl;
+    f << "Total Local Mapping: " << average << "$\\pm$" << deviation << endl;
 
     // Local Mapping LBA complexity
-    std::cout << "---------------------------" << std::endl;
-    std::cout << std::endl << "LBA complexity (mean$\\pm$std)" << std::endl;
-    f << "---------------------------" << std::endl;
-    f << std::endl << "LBA complexity (mean$\\pm$std)" << std::endl;
+    cout << "---------------------------" << endl;
+    cout << endl << "LBA complexity (mean$\\pm$std)" << endl;
+    f << "---------------------------" << endl;
+    f << endl << "LBA complexity (mean$\\pm$std)" << endl;
 
     average = calcAverage(mpLocalMapper->vnLBA_edges);
     deviation = calcDeviation(mpLocalMapper->vnLBA_edges, average);
-    std::cout << "LBA Edges: " << average << "$\\pm$" << deviation << std::endl;
-    f << "LBA Edges: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "LBA Edges: " << average << "$\\pm$" << deviation << endl;
+    f << "LBA Edges: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vnLBA_KFopt);
     deviation = calcDeviation(mpLocalMapper->vnLBA_KFopt, average);
-    std::cout << "LBA KF optimized: " << average << "$\\pm$" << deviation << std::endl;
-    f << "LBA KF optimized: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "LBA KF optimized: " << average << "$\\pm$" << deviation << endl;
+    f << "LBA KF optimized: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vnLBA_KFfixed);
     deviation = calcDeviation(mpLocalMapper->vnLBA_KFfixed, average);
-    std::cout << "LBA KF fixed: " << average << "$\\pm$" << deviation << std::endl;
-    f << "LBA KF fixed: " << average << "$\\pm$" << deviation << std::endl;
+    cout << "LBA KF fixed: " << average << "$\\pm$" << deviation << endl;
+    f << "LBA KF fixed: " << average << "$\\pm$" << deviation << endl;
 
     average = calcAverage(mpLocalMapper->vnLBA_MPs);
     deviation = calcDeviation(mpLocalMapper->vnLBA_MPs, average);
-    std::cout << "LBA MP: " << average << "$\\pm$" << deviation << std::endl << std::endl;
-    f << "LBA MP: " << average << "$\\pm$" << deviation << std::endl << std::endl;
+    cout << "LBA MP: " << average << "$\\pm$" << deviation << endl << endl;
+    f << "LBA MP: " << average << "$\\pm$" << deviation << endl << endl;
 
-    std::cout << "LBA executions: " << mpLocalMapper->nLBA_exec << std::endl;
-    std::cout << "LBA aborts: " << mpLocalMapper->nLBA_abort << std::endl;
-    f << "LBA executions: " << mpLocalMapper->nLBA_exec << std::endl;
-    f << "LBA aborts: " << mpLocalMapper->nLBA_abort << std::endl;
+    cout << "LBA executions: " << mpLocalMapper->nLBA_exec << endl;
+    cout << "LBA aborts: " << mpLocalMapper->nLBA_abort << endl;
+    f << "LBA executions: " << mpLocalMapper->nLBA_exec << endl;
+    f << "LBA aborts: " << mpLocalMapper->nLBA_abort << endl;
 
     // Map complexity
-    std::cout << "---------------------------" << std::endl;
-    std::cout << std::endl << "Map complexity" << std::endl;
-    std::cout << "KFs in map: " << mpAtlas->GetAllKeyFrames().size() << std::endl;
-    std::cout << "MPs in map: " << mpAtlas->GetAllMapPoints().size() << std::endl;
-    f << "---------------------------" << std::endl;
-    f << std::endl << "Map complexity" << std::endl;
+    cout << "---------------------------" << endl;
+    cout << endl << "Map complexity" << endl;
+    cout << "KFs in map: " << mpAtlas->GetAllKeyFrames().size() << endl;
+    cout << "MPs in map: " << mpAtlas->GetAllMapPoints().size() << endl;
+    f << "---------------------------" << endl;
+    f << endl << "Map complexity" << endl;
     vector<Map*> vpMaps = mpAtlas->GetAllMaps();
     Map* pBestMap = vpMaps[0];
     for(int i=1; i<vpMaps.size(); ++i)
@@ -420,105 +422,105 @@ void Tracking::PrintTimeStats()
         }
     }
 
-    f << "KFs in map: " << pBestMap->GetAllKeyFrames().size() << std::endl;
-    f << "MPs in map: " << pBestMap->GetAllMapPoints().size() << std::endl;
+    f << "KFs in map: " << pBestMap->GetAllKeyFrames().size() << endl;
+    f << "MPs in map: " << pBestMap->GetAllMapPoints().size() << endl;
 
-    f << "---------------------------" << std::endl;
-    f << std::endl << "Place Recognition (mean$\\pm$std)" << std::endl;
-    std::cout << "---------------------------" << std::endl;
-    std::cout << std::endl << "Place Recognition (mean$\\pm$std)" << std::endl;
+    f << "---------------------------" << endl;
+    f << endl << "Place Recognition (mean$\\pm$std)" << endl;
+    cout << "---------------------------" << endl;
+    cout << endl << "Place Recognition (mean$\\pm$std)" << endl;
     average = calcAverage(mpLoopClosing->vdDataQuery_ms);
     deviation = calcDeviation(mpLoopClosing->vdDataQuery_ms, average);
-    f << "Database Query: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Database Query: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Database Query: " << average << "$\\pm$" << deviation << endl;
+    cout << "Database Query: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdEstSim3_ms);
     deviation = calcDeviation(mpLoopClosing->vdEstSim3_ms, average);
-    f << "SE3 estimation: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "SE3 estimation: " << average << "$\\pm$" << deviation << std::endl;
+    f << "SE3 estimation: " << average << "$\\pm$" << deviation << endl;
+    cout << "SE3 estimation: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdPRTotal_ms);
     deviation = calcDeviation(mpLoopClosing->vdPRTotal_ms, average);
-    f << "Total Place Recognition: " << average << "$\\pm$" << deviation << std::endl << std::endl;
-    std::cout << "Total Place Recognition: " << average << "$\\pm$" << deviation << std::endl << std::endl;
+    f << "Total Place Recognition: " << average << "$\\pm$" << deviation << endl << endl;
+    cout << "Total Place Recognition: " << average << "$\\pm$" << deviation << endl << endl;
 
-    f << std::endl << "Loop Closing (mean$\\pm$std)" << std::endl;
-    std::cout << std::endl << "Loop Closing (mean$\\pm$std)" << std::endl;
+    f << endl << "Loop Closing (mean$\\pm$std)" << endl;
+    cout << endl << "Loop Closing (mean$\\pm$std)" << endl;
     average = calcAverage(mpLoopClosing->vdLoopFusion_ms);
     deviation = calcDeviation(mpLoopClosing->vdLoopFusion_ms, average);
-    f << "Loop Fusion: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Loop Fusion: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Loop Fusion: " << average << "$\\pm$" << deviation << endl;
+    cout << "Loop Fusion: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdLoopOptEss_ms);
     deviation = calcDeviation(mpLoopClosing->vdLoopOptEss_ms, average);
-    f << "Essential Graph: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Essential Graph: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Essential Graph: " << average << "$\\pm$" << deviation << endl;
+    cout << "Essential Graph: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdLoopTotal_ms);
     deviation = calcDeviation(mpLoopClosing->vdLoopTotal_ms, average);
-    f << "Total Loop Closing: " << average << "$\\pm$" << deviation << std::endl << std::endl;
-    std::cout << "Total Loop Closing: " << average << "$\\pm$" << deviation << std::endl << std::endl;
+    f << "Total Loop Closing: " << average << "$\\pm$" << deviation << endl << endl;
+    cout << "Total Loop Closing: " << average << "$\\pm$" << deviation << endl << endl;
 
-    f << "Numb exec: " << mpLoopClosing->nLoop << std::endl;
-    std::cout << "Num exec: " << mpLoopClosing->nLoop << std::endl;
+    f << "Numb exec: " << mpLoopClosing->nLoop << endl;
+    cout << "Num exec: " << mpLoopClosing->nLoop << endl;
     average = calcAverage(mpLoopClosing->vnLoopKFs);
     deviation = calcDeviation(mpLoopClosing->vnLoopKFs, average);
-    f << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+    cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
 
-    f << std::endl << "Map Merging (mean$\\pm$std)" << std::endl;
-    std::cout << std::endl << "Map Merging (mean$\\pm$std)" << std::endl;
+    f << endl << "Map Merging (mean$\\pm$std)" << endl;
+    cout << endl << "Map Merging (mean$\\pm$std)" << endl;
     average = calcAverage(mpLoopClosing->vdMergeMaps_ms);
     deviation = calcDeviation(mpLoopClosing->vdMergeMaps_ms, average);
-    f << "Merge Maps: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Merge Maps: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Merge Maps: " << average << "$\\pm$" << deviation << endl;
+    cout << "Merge Maps: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdWeldingBA_ms);
     deviation = calcDeviation(mpLoopClosing->vdWeldingBA_ms, average);
-    f << "Welding BA: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Welding BA: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Welding BA: " << average << "$\\pm$" << deviation << endl;
+    cout << "Welding BA: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdMergeOptEss_ms);
     deviation = calcDeviation(mpLoopClosing->vdMergeOptEss_ms, average);
-    f << "Optimization Ess.: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Optimization Ess.: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Optimization Ess.: " << average << "$\\pm$" << deviation << endl;
+    cout << "Optimization Ess.: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdMergeTotal_ms);
     deviation = calcDeviation(mpLoopClosing->vdMergeTotal_ms, average);
-    f << "Total Map Merging: " << average << "$\\pm$" << deviation << std::endl << std::endl;
-    std::cout << "Total Map Merging: " << average << "$\\pm$" << deviation << std::endl << std::endl;
+    f << "Total Map Merging: " << average << "$\\pm$" << deviation << endl << endl;
+    cout << "Total Map Merging: " << average << "$\\pm$" << deviation << endl << endl;
 
-    f << "Numb exec: " << mpLoopClosing->nMerges << std::endl;
-    std::cout << "Num exec: " << mpLoopClosing->nMerges << std::endl;
+    f << "Numb exec: " << mpLoopClosing->nMerges << endl;
+    cout << "Num exec: " << mpLoopClosing->nMerges << endl;
     average = calcAverage(mpLoopClosing->vnMergeKFs);
     deviation = calcDeviation(mpLoopClosing->vnMergeKFs, average);
-    f << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+    cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vnMergeMPs);
     deviation = calcDeviation(mpLoopClosing->vnMergeMPs, average);
-    f << "Number of MPs: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Number of MPs: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
+    cout << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
 
-    f << std::endl << "Full GBA (mean$\\pm$std)" << std::endl;
-    std::cout << std::endl << "Full GBA (mean$\\pm$std)" << std::endl;
+    f << endl << "Full GBA (mean$\\pm$std)" << endl;
+    cout << endl << "Full GBA (mean$\\pm$std)" << endl;
     average = calcAverage(mpLoopClosing->vdGBA_ms);
     deviation = calcDeviation(mpLoopClosing->vdGBA_ms, average);
-    f << "GBA: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "GBA: " << average << "$\\pm$" << deviation << std::endl;
+    f << "GBA: " << average << "$\\pm$" << deviation << endl;
+    cout << "GBA: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdUpdateMap_ms);
     deviation = calcDeviation(mpLoopClosing->vdUpdateMap_ms, average);
-    f << "Map Update: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Map Update: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Map Update: " << average << "$\\pm$" << deviation << endl;
+    cout << "Map Update: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vdFGBATotal_ms);
     deviation = calcDeviation(mpLoopClosing->vdFGBATotal_ms, average);
-    f << "Total Full GBA: " << average << "$\\pm$" << deviation << std::endl << std::endl;
-    std::cout << "Total Full GBA: " << average << "$\\pm$" << deviation << std::endl << std::endl;
+    f << "Total Full GBA: " << average << "$\\pm$" << deviation << endl << endl;
+    cout << "Total Full GBA: " << average << "$\\pm$" << deviation << endl << endl;
 
-    f << "Numb exec: " << mpLoopClosing->nFGBA_exec << std::endl;
-    std::cout << "Num exec: " << mpLoopClosing->nFGBA_exec << std::endl;
-    f << "Numb abort: " << mpLoopClosing->nFGBA_abort << std::endl;
-    std::cout << "Num abort: " << mpLoopClosing->nFGBA_abort << std::endl;
+    f << "Numb exec: " << mpLoopClosing->nFGBA_exec << endl;
+    cout << "Num exec: " << mpLoopClosing->nFGBA_exec << endl;
+    f << "Numb abort: " << mpLoopClosing->nFGBA_abort << endl;
+    cout << "Num abort: " << mpLoopClosing->nFGBA_abort << endl;
     average = calcAverage(mpLoopClosing->vnGBAKFs);
     deviation = calcDeviation(mpLoopClosing->vnGBAKFs, average);
-    f << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Number of KFs: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+    cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
     average = calcAverage(mpLoopClosing->vnGBAMPs);
     deviation = calcDeviation(mpLoopClosing->vnGBAMPs, average);
-    f << "Number of MPs: " << average << "$\\pm$" << deviation << std::endl;
-    std::cout << "Number of MPs: " << average << "$\\pm$" << deviation << std::endl;
+    f << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
+    cout << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
 
     f.close();
 
@@ -636,7 +638,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -647,7 +649,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.fy parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.fy parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -658,7 +660,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.cx parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.cx parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -669,7 +671,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.cy parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.cy parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -681,7 +683,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k1 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k1 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -692,7 +694,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k2 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k2 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -703,7 +705,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.p1 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.p1 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -714,7 +716,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.p2 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.p2 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -751,21 +753,21 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
 
         mpCamera = mpAtlas->AddCamera(mpCamera);
 
-        std::cout << "- Camera: Pinhole" << std::endl;
-        std::cout << "- Image scale: " << mImageScale << std::endl;
-        std::cout << "- fx: " << fx << std::endl;
-        std::cout << "- fy: " << fy << std::endl;
-        std::cout << "- cx: " << cx << std::endl;
-        std::cout << "- cy: " << cy << std::endl;
-        std::cout << "- k1: " << mDistCoef.at<float>(0) << std::endl;
-        std::cout << "- k2: " << mDistCoef.at<float>(1) << std::endl;
+        cout << "- Camera: Pinhole" << endl;
+        cout << "- Image scale: " << mImageScale << endl;
+        cout << "- fx: " << fx << endl;
+        cout << "- fy: " << fy << endl;
+        cout << "- cx: " << cx << endl;
+        cout << "- cy: " << cy << endl;
+        cout << "- k1: " << mDistCoef.at<float>(0) << endl;
+        cout << "- k2: " << mDistCoef.at<float>(1) << endl;
 
 
-        std::cout << "- p1: " << mDistCoef.at<float>(2) << std::endl;
-        std::cout << "- p2: " << mDistCoef.at<float>(3) << std::endl;
+        cout << "- p1: " << mDistCoef.at<float>(2) << endl;
+        cout << "- p2: " << mDistCoef.at<float>(3) << endl;
 
         if(mDistCoef.rows==5)
-            std::cout << "- k3: " << mDistCoef.at<float>(4) << std::endl;
+            cout << "- k3: " << mDistCoef.at<float>(4) << endl;
 
         mK = cv::Mat::eye(3,3,CV_32F);
         mK.at<float>(0,0) = fx;
@@ -793,7 +795,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
         node = fSettings["Camera.fy"];
@@ -803,7 +805,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.fy parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.fy parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -814,7 +816,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.cx parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.cx parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -825,7 +827,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.cy parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.cy parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -837,7 +839,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k1 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k1 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
         node = fSettings["Camera.k2"];
@@ -847,7 +849,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k2 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k2 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -858,7 +860,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k3 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k3 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -869,7 +871,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.k4 parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.k4 parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -893,16 +895,16 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             vector<float> vCamCalib{fx,fy,cx,cy,k1,k2,k3,k4};
             mpCamera = new KannalaBrandt8(vCamCalib);
             mpCamera = mpAtlas->AddCamera(mpCamera);
-            std::cout << "- Camera: Fisheye" << std::endl;
-            std::cout << "- Image scale: " << mImageScale << std::endl;
-            std::cout << "- fx: " << fx << std::endl;
-            std::cout << "- fy: " << fy << std::endl;
-            std::cout << "- cx: " << cx << std::endl;
-            std::cout << "- cy: " << cy << std::endl;
-            std::cout << "- k1: " << k1 << std::endl;
-            std::cout << "- k2: " << k2 << std::endl;
-            std::cout << "- k3: " << k3 << std::endl;
-            std::cout << "- k4: " << k4 << std::endl;
+            cout << "- Camera: Fisheye" << endl;
+            cout << "- Image scale: " << mImageScale << endl;
+            cout << "- fx: " << fx << endl;
+            cout << "- fy: " << fy << endl;
+            cout << "- cx: " << cx << endl;
+            cout << "- cy: " << cy << endl;
+            cout << "- k1: " << k1 << endl;
+            cout << "- k2: " << k2 << endl;
+            cout << "- k3: " << k3 << endl;
+            cout << "- k4: " << k4 << endl;
 
             mK = cv::Mat::eye(3,3,CV_32F);
             mK.at<float>(0,0) = fx;
@@ -927,7 +929,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.fx parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.fx parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
             node = fSettings["Camera2.fy"];
@@ -937,7 +939,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.fy parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.fy parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -948,7 +950,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.cx parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.cx parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -959,7 +961,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.cy parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.cy parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -971,7 +973,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.k1 parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.k1 parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
             node = fSettings["Camera2.k2"];
@@ -981,7 +983,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.k2 parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.k2 parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -992,7 +994,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.k3 parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.k3 parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -1003,7 +1005,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cerr << "*Camera2.k4 parameter doesn't exist or is not a real number*" << std::endl;
+                cerr << "*Camera2.k4 parameter doesn't exist or is not a real number*" << endl;
                 b_miss_params = true;
             }
 
@@ -1021,7 +1023,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cout << "WARNING: Camera.lappingBegin not correctly defined" << std::endl;
+                cout << "WARNING: Camera.lappingBegin not correctly defined" << endl;
             }
             node = fSettings["Camera.lappingEnd"];
             if(!node.empty() && node.isInt())
@@ -1030,7 +1032,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cout << "WARNING: Camera.lappingEnd not correctly defined" << std::endl;
+                cout << "WARNING: Camera.lappingEnd not correctly defined" << endl;
             }
             node = fSettings["Camera2.lappingBegin"];
             if(!node.empty() && node.isInt())
@@ -1039,7 +1041,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cout << "WARNING: Camera2.lappingBegin not correctly defined" << std::endl;
+                cout << "WARNING: Camera2.lappingBegin not correctly defined" << endl;
             }
             node = fSettings["Camera2.lappingEnd"];
             if(!node.empty() && node.isInt())
@@ -1048,7 +1050,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
             }
             else
             {
-                std::cout << "WARNING: Camera2.lappingEnd not correctly defined" << std::endl;
+                cout << "WARNING: Camera2.lappingEnd not correctly defined" << endl;
             }
 
             node = fSettings["Tlr"];
@@ -1058,13 +1060,13 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
                 cvTlr = node.mat();
                 if(cvTlr.rows != 3 || cvTlr.cols != 4)
                 {
-                    std::cerr << "*Tlr matrix have to be a 3x4 transformation matrix*" << std::endl;
+                    cerr << "*Tlr matrix have to be a 3x4 transformation matrix*" << endl;
                     b_miss_params = true;
                 }
             }
             else
             {
-                std::cerr << "*Tlr matrix doesn't exist*" << std::endl;
+                cerr << "*Tlr matrix doesn't exist*" << endl;
                 b_miss_params = true;
             }
 
@@ -1098,23 +1100,23 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
                 static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[0] = rightLappingBegin;
                 static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[1] = rightLappingEnd;
 
-                std::cout << "- Camera1 Lapping: " << leftLappingBegin << ", " << leftLappingEnd << std::endl;
+                cout << "- Camera1 Lapping: " << leftLappingBegin << ", " << leftLappingEnd << endl;
 
-                std::cout << std::endl << "Camera2 Parameters:" << std::endl;
-                std::cout << "- Camera: Fisheye" << std::endl;
-                std::cout << "- Image scale: " << mImageScale << std::endl;
-                std::cout << "- fx: " << fx << std::endl;
-                std::cout << "- fy: " << fy << std::endl;
-                std::cout << "- cx: " << cx << std::endl;
-                std::cout << "- cy: " << cy << std::endl;
-                std::cout << "- k1: " << k1 << std::endl;
-                std::cout << "- k2: " << k2 << std::endl;
-                std::cout << "- k3: " << k3 << std::endl;
-                std::cout << "- k4: " << k4 << std::endl;
+                cout << endl << "Camera2 Parameters:" << endl;
+                cout << "- Camera: Fisheye" << endl;
+                cout << "- Image scale: " << mImageScale << endl;
+                cout << "- fx: " << fx << endl;
+                cout << "- fy: " << fy << endl;
+                cout << "- cx: " << cx << endl;
+                cout << "- cy: " << cy << endl;
+                cout << "- k1: " << k1 << endl;
+                cout << "- k2: " << k2 << endl;
+                cout << "- k3: " << k3 << endl;
+                cout << "- k4: " << k4 << endl;
 
-                std::cout << "- mTlr: \n" << cvTlr << std::endl;
+                cout << "- mTlr: \n" << cvTlr << endl;
 
-                std::cout << "- Camera2 Lapping: " << rightLappingBegin << ", " << rightLappingEnd << std::endl;
+                cout << "- Camera2 Lapping: " << rightLappingBegin << ", " << rightLappingEnd << endl;
             }
         }
 
@@ -1126,8 +1128,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*Not Supported Camera Sensor*" << std::endl;
-        std::cerr << "Check an example configuration file with the desired sensor" << std::endl;
+        cerr << "*Not Supported Camera Sensor*" << endl;
+        cerr << "Check an example configuration file with the desired sensor" << endl;
     }
 
     if(mSensor==System::STEREO || mSensor==System::RGBD || mSensor==System::IMU_STEREO || mSensor==System::IMU_RGBD )
@@ -1143,7 +1145,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*Camera.bf parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*Camera.bf parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -1180,7 +1182,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*ThDepth parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*ThDepth parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -1200,7 +1202,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         }
         else
         {
-            std::cerr << "*DepthMapFactor parameter doesn't exist or is not a real number*" << std::endl;
+            cerr << "*DepthMapFactor parameter doesn't exist or is not a real number*" << endl;
             b_miss_params = true;
         }
 
@@ -1227,7 +1229,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*ORBextractor.nFeatures parameter doesn't exist or is not an integer*" << std::endl;
+        cerr << "*ORBextractor.nFeatures parameter doesn't exist or is not an integer*" << endl;
         b_miss_params = true;
     }
 
@@ -1238,7 +1240,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*ORBextractor.scaleFactor parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*ORBextractor.scaleFactor parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -1249,7 +1251,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*ORBextractor.nLevels parameter doesn't exist or is not an integer*" << std::endl;
+        cerr << "*ORBextractor.nLevels parameter doesn't exist or is not an integer*" << endl;
         b_miss_params = true;
     }
 
@@ -1260,7 +1262,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*ORBextractor.iniThFAST parameter doesn't exist or is not an integer*" << std::endl;
+        cerr << "*ORBextractor.iniThFAST parameter doesn't exist or is not an integer*" << endl;
         b_miss_params = true;
     }
 
@@ -1271,7 +1273,7 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*ORBextractor.minThFAST parameter doesn't exist or is not an integer*" << std::endl;
+        cerr << "*ORBextractor.minThFAST parameter doesn't exist or is not an integer*" << endl;
         b_miss_params = true;
     }
 
@@ -1309,13 +1311,13 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
         cvTbc = node.mat();
         if(cvTbc.rows != 4 || cvTbc.cols != 4)
         {
-            std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
+            cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << endl;
             b_miss_params = true;
         }
     }
     else
     {
-        std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
+        cerr << "*Tbc matrix doesn't exist*" << endl;
         b_miss_params = true;
     }
     cout << endl;
@@ -1345,7 +1347,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*IMU.Frequency parameter doesn't exist or is not an integer*" << std::endl;
+        cerr << "*IMU.Frequency parameter doesn't exist or is not an integer*" << endl;
         b_miss_params = true;
     }
 
@@ -1356,7 +1358,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*IMU.NoiseGyro parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*IMU.NoiseGyro parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -1367,7 +1369,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*IMU.NoiseAcc parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*IMU.NoiseAcc parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -1378,7 +1380,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*IMU.GyroWalk parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*IMU.GyroWalk parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -1389,7 +1391,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     }
     else
     {
-        std::cerr << "*IMU.AccWalk parameter doesn't exist or is not a real number*" << std::endl;
+        cerr << "*IMU.AccWalk parameter doesn't exist or is not a real number*" << endl;
         b_miss_params = true;
     }
 
@@ -1796,7 +1798,7 @@ void Tracking::Track()
 
     if (bStepByStep)
     {
-        std::cout << "Tracking: Waiting to the next step" << std::endl;
+        cout << "Tracking: Waiting to the next step" << endl;
         while(!mbStep && bStepByStep)
             usleep(500);
         mbStep = false;
@@ -1869,13 +1871,13 @@ void Tracking::Track()
     if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && !mbCreatedMap)
     {
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_StartPreIMU = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_StartPreIMU = chrono::steady_clock::now();
 #endif
         PreintegrateIMU();
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_EndPreIMU = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_EndPreIMU = chrono::steady_clock::now();
 
-        double timePreImu = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndPreIMU - time_StartPreIMU).count();
+        double timePreImu = chrono::duration_cast<chrono::duration<double,milli> >(time_EndPreIMU - time_StartPreIMU).count();
         vdIMUInteg_ms.push_back(timePreImu);
 #endif
 
@@ -1926,7 +1928,7 @@ void Tracking::Track()
         bool bOK;
 
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_StartPosePred = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_StartPosePred = chrono::steady_clock::now();
 #endif
 
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
@@ -2001,8 +2003,8 @@ void Tracking::Track()
                     {
                         // Relocalization
                         bOK = Relocalization();
-                        //std::cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << std::endl;
-                        //std::cout << "mTimeStampLost:" << to_string(mTimeStampLost) << std::endl;
+                        //cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << endl;
+                        //cout << "mTimeStampLost:" << to_string(mTimeStampLost) << endl;
                         if(mCurrentFrame.mTimeStamp-mTimeStampLost>3.0f && !bOK)
                         {
                             mState = LOST;
@@ -2109,15 +2111,15 @@ void Tracking::Track()
             mCurrentFrame.mpReferenceKF = mpReferenceKF;
 
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_EndPosePred = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_EndPosePred = chrono::steady_clock::now();
 
-        double timePosePred = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndPosePred - time_StartPosePred).count();
+        double timePosePred = chrono::duration_cast<chrono::duration<double,milli> >(time_EndPosePred - time_StartPosePred).count();
         vdPosePred_ms.push_back(timePosePred);
 #endif
 
 
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_StartLMTrack = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_StartLMTrack = chrono::steady_clock::now();
 #endif
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
@@ -2191,9 +2193,9 @@ void Tracking::Track()
         }
 
 #ifdef REGISTER_TIMES
-        std::chrono::steady_clock::time_point time_EndLMTrack = std::chrono::steady_clock::now();
+        chrono::steady_clock::time_point time_EndLMTrack = chrono::steady_clock::now();
 
-        double timeLMTrack = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndLMTrack - time_StartLMTrack).count();
+        double timeLMTrack = chrono::duration_cast<chrono::duration<double,milli> >(time_EndLMTrack - time_StartLMTrack).count();
         vdLMTrack_ms.push_back(timeLMTrack);
 #endif
 
@@ -2239,7 +2241,7 @@ void Tracking::Track()
             mlpTemporalPoints.clear();
 
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_StartNewKF = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_StartNewKF = chrono::steady_clock::now();
 #endif
             bool bNeedKF = NeedNewKeyFrame();
 
@@ -2250,9 +2252,9 @@ void Tracking::Track()
                 CreateNewKeyFrame();
 
 #ifdef REGISTER_TIMES
-            std::chrono::steady_clock::time_point time_EndNewKF = std::chrono::steady_clock::now();
+            chrono::steady_clock::time_point time_EndNewKF = chrono::steady_clock::now();
 
-            double timeNewKF = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndNewKF - time_StartNewKF).count();
+            double timeNewKF = chrono::duration_cast<chrono::duration<double,milli> >(time_EndNewKF - time_StartNewKF).count();
             vdNewKF_ms.push_back(timeNewKF);
 #endif
 
@@ -2572,7 +2574,7 @@ void Tracking::CreateInitialMapMonocular()
     pKFini->UpdateConnections();
     pKFcur->UpdateConnections();
 
-    std::set<MapPoint*> sMPs;
+    set<MapPoint*> sMPs;
     sMPs = pKFini->GetMapPoints();
 
     // Bundle Adjustment
@@ -3080,7 +3082,7 @@ bool Tracking::NeedNewKeyFrame()
     if(mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()) {
         /*if(mSensor == System::MONOCULAR)
         {
-            std::cout << "NeedNewKeyFrame: localmap stopped" << std::endl;
+            cout << "NeedNewKeyFrame: localmap stopped" << endl;
         }*/
         return false;
     }
@@ -3161,7 +3163,7 @@ bool Tracking::NeedNewKeyFrame()
     // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
     const bool c2 = (((mnMatchesInliers<nRefMatches*thRefRatio || bNeedToInsertClose)) && mnMatchesInliers>15);
 
-    //std::cout << "NeedNewKF: c1a=" << c1a << "; c1b=" << c1b << "; c1c=" << c1c << "; c2=" << c2 << std::endl;
+    //cout << "NeedNewKF: c1a=" << c1a << "; c1b=" << c1b << "; c1c=" << c1c << "; c2=" << c2 << endl;
     // Temporal condition for Inertial cases
     bool c3 = false;
     if(mpLastKeyFrame)
@@ -3204,7 +3206,7 @@ bool Tracking::NeedNewKeyFrame()
             }
             else
             {
-                //std::cout << "NeedNewKeyFrame: localmap is busy" << std::endl;
+                //cout << "NeedNewKeyFrame: localmap is busy" << endl;
                 return false;
             }
         }
