@@ -19,11 +19,11 @@
  * ORB-SLAM3. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
-
 #include "KannalaBrandt8.h"
 
 #include <boost/serialization/export.hpp>
+
+using namespace std;
 
 // BOOST_CLASS_EXPORT_IMPLEMENT(ORB_SLAM3::KannalaBrandt8)
 

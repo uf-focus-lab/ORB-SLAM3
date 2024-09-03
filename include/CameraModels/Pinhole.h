@@ -21,13 +21,12 @@
 #ifndef CAMERAMODELS_PINHOLE_H
 #define CAMERAMODELS_PINHOLE_H
 
-using namespace std;
-
 #include <assert.h>
 
 #include "GeometricCamera.h"
-
 #include "TwoViewReconstruction.h"
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 class Pinhole : public GeometricCamera {

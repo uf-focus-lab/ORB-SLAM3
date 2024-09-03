@@ -21,8 +21,6 @@
 #ifndef CAMERAMODELS_GEOMETRICCAMERA_H
 #define CAMERAMODELS_GEOMETRICCAMERA_H
 
-using namespace std;
-
 #include <vector>
 
 #include <opencv2/core/core.hpp>
@@ -42,6 +40,8 @@ using namespace std;
 
 #include "Converter.h"
 #include "GeometricTools.h"
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 class GeometricCamera {
