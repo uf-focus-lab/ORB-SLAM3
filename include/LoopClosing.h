@@ -21,8 +21,6 @@
 #ifndef LOOPCLOSING_H
 #define LOOPCLOSING_H
 
-using namespace std;
-
 #include "Atlas.h"
 #include "KeyFrame.h"
 #include "LocalMapping.h"
@@ -36,6 +34,8 @@ using namespace std;
 #include <thread>
 
 #include <g2o/types/sim3/types_seven_dof_expmap.h>
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 

@@ -257,8 +257,8 @@ public:
 
   // KeyPoint functions
   vector<size_t> GetFeaturesInArea(const float &x, const float &y,
-                                        const float &r,
-                                        const bool bRight = false) const;
+                                   const float &r,
+                                   const bool bRight = false) const;
   bool UnprojectStereo(int i, Eigen::Vector3f &x3D);
 
   // Image

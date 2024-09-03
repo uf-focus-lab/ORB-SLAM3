@@ -307,9 +307,8 @@ public:
   }
 };
 
-class EdgeMono
-    : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexPointXYZ,
-                                 VertexPose> {
+class EdgeMono : public g2o::BaseBinaryEdge<2, Eigen::Vector2d,
+                                            g2o::VertexPointXYZ, VertexPose> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -389,9 +388,8 @@ public:
   const int cam_idx;
 };
 
-class EdgeStereo
-    : public g2o::BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPointXYZ,
-                                 VertexPose> {
+class EdgeStereo : public g2o::BaseBinaryEdge<3, Eigen::Vector3d,
+                                              g2o::VertexPointXYZ, VertexPose> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

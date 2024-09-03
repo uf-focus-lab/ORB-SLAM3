@@ -19,8 +19,6 @@
  * ORB-SLAM3. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
-
 #include "TwoViewReconstruction.h"
 
 #include "Converter.h"
