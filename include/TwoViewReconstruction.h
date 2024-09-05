@@ -21,13 +21,13 @@
 #ifndef TwoViewReconstruction_H
 #define TwoViewReconstruction_H
 
-using namespace std;
-
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
 #include <unordered_set>
 
 #include <sophus/se3.hpp>
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 

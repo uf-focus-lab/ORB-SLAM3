@@ -125,8 +125,10 @@ class KeyFrame {
     ar &const_cast<vector<float> &>(mvDepth);
     serializeMatrix<Archive>(ar, mDescriptors, version);
     // BOW
-    ar & mBowVec;
-    ar & mFeatVec;
+    ar &boost::serialization::base_object<
+        std::map<DBoW2::WordId, DBoW2::WordValue>>(mBowVec);
+    ar &boost::serialization::base_object<
+        std::map<DBoW2::NodeId, std::vector<unsigned int>>>(mFeatVec);
     // Pose relative to parent
     serializeSophusSE3<Archive>(ar, mTcp, version);
     // Scale

@@ -1423,27 +1423,24 @@ void System::SaveAtlas(int type) {
     size_t found = mStrVocabularyFilePath.find_last_of("/\\");
     string strVocabularyName = mStrVocabularyFilePath.substr(found + 1);
 
-    if (type == TEXT_FILE) // File text
-    {
-      cout << "Starting to write the save text file " << endl;
+    if (type == TEXT_FILE) {
+      cout << "Writing Atlas to " << pathSaveFileName << " (text)" << endl;
       remove(pathSaveFileName.c_str());
       ofstream ofs(pathSaveFileName, ios::binary);
       boost::archive::text_oarchive oa(ofs);
-
       oa << strVocabularyName;
       oa << strVocabularyChecksum;
       oa << mpAtlas;
-      cout << "End to write the save text file" << endl;
-    } else if (type == BINARY_FILE) // File binary
-    {
-      cout << "Starting to write the save binary file" << endl;
+      cout << "Atlas data saved as text file" << endl;
+    } else if (type == BINARY_FILE) {
+      cout << "Writing Atlas to " << pathSaveFileName << " (binary)" << endl;
       remove(pathSaveFileName.c_str());
       ofstream ofs(pathSaveFileName, ios::binary);
       boost::archive::binary_oarchive oa(ofs);
       oa << strVocabularyName;
       oa << strVocabularyChecksum;
       oa << mpAtlas;
-      cout << "End to write save binary file" << endl;
+      cout << "Atlas data saved as binary file" << endl;
     }
   }
 }
@@ -1456,9 +1453,8 @@ bool System::LoadAtlas(int type) {
   pathLoadFileName = pathLoadFileName.append(mStrLoadAtlasFromFile);
   pathLoadFileName = pathLoadFileName.append(".osa");
 
-  if (type == TEXT_FILE) // File text
-  {
-    cout << "Starting to read the save text file " << endl;
+  if (type == TEXT_FILE) {
+    cout << "Loading Atlas from: " << pathLoadFileName << " (text)" << endl;
     ifstream ifs(pathLoadFileName, ios::binary);
     if (!ifs.good()) {
       cout << "Load file not found" << endl;
@@ -1468,11 +1464,10 @@ bool System::LoadAtlas(int type) {
     ia >> strFileVoc;
     ia >> strVocChecksum;
     ia >> mpAtlas;
-    cout << "End to load the save text file " << endl;
+    cout << "Atlas data loaded from text file." << endl;
     isRead = true;
-  } else if (type == BINARY_FILE) // File binary
-  {
-    cout << "Starting to read the save binary file" << endl;
+  } else if (type == BINARY_FILE) {
+    cout << "Loading Atlas from: " << pathLoadFileName << " (binary)" << endl;
     ifstream ifs(pathLoadFileName, ios::binary);
     if (!ifs.good()) {
       cout << "Load file not found" << endl;
@@ -1482,7 +1477,7 @@ bool System::LoadAtlas(int type) {
     ia >> strFileVoc;
     ia >> strVocChecksum;
     ia >> mpAtlas;
-    cout << "End to load the save binary file" << endl;
+    cout << "Atlas data loaded from binary file." << endl;
     isRead = true;
   }
 
@@ -1519,7 +1514,7 @@ string System::CalculateCheckSum(string filename, int type) {
 
   ifstream f(filename.c_str(), flags);
   if (!f.is_open()) {
-    cout << "[E] Unable to open the in file " << filename << " for Md5 hash."
+    cout << "[E] Unable to open the input file " << filename << " for Md5 hash."
          << endl;
     return checksum;
   }

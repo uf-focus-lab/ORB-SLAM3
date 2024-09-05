@@ -5,9 +5,10 @@ CameraTrajectory.txt
 kf_*.txt
 f_*.txt
 vocabulary/ORBvoc.txt
-build/
 
+build/
 lib/
+bin/
 
 cmake_modules/
 cmake-build-debug/

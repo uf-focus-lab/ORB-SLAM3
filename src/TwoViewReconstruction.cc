@@ -23,8 +23,7 @@
 
 #include "Converter.h"
 #include "GeometricTools.h"
-
-#include <DBoW2/DUtils/Random.h>
+#include "Random.h"
 
 #include <thread>
 
@@ -78,14 +77,14 @@ bool TwoViewReconstruction::Reconstruct(const vector<cv::KeyPoint> &vKeys1,
   // Generate sets of 8 points for each RANSAC iteration
   mvSets = vector<vector<size_t>>(mMaxIterations, vector<size_t>(8, 0));
 
-  DUtils::Random::SeedRandOnce(0);
+  std::srand(0);
 
   for (int it = 0; it < mMaxIterations; it++) {
     vAvailableIndices = vAllIndices;
 
     // Select a minimum set
     for (size_t j = 0; j < 8; j++) {
-      int randi = DUtils::Random::RandomInt(0, vAvailableIndices.size() - 1);
+      int randi = random<int>(0, vAvailableIndices.size() - 1);
       int idx = vAvailableIndices[randi];
 
       mvSets[it][j] = idx;

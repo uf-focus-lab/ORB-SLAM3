@@ -1,0 +1,27 @@
+#!/bin/sh
+LIBRARIES=$(find lib/ -type d -name "lib" | tr '\n' ':')
+
+if [ -z $LD_LIBRARY_PATH ]; then
+    export LD_LIBRARY_PATH=${LIBRARIES}
+else
+    export LD_LIBRARY_PATH=${LIBRARIES}:${LD_LIBRARY_PATH}
+fi
+
+if [ -z $DYLD_LIBRARY_PATH ]; then
+    export DYLD_LIBRARY_PATH=${LIBRARIES}
+else
+    export DYLD_LIBRARY_PATH=${LIBRARIES}:${DYLD_LIBRARY_PATH}
+fi
+
+if [ -z $1 ]; then
+    echo "Usage: ./run.sh <executable> [...args]"
+    exit 1
+elif [ ! -f $1 ]; then
+    echo "Executable $@ not found"
+    echo "Usage: ./run.sh <executable> [...args]"
+    exit 1
+fi
+
+# Run the executable
+$@
+exit $?

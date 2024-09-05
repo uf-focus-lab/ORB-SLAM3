@@ -1362,7 +1362,6 @@ void LoopClosing::MergeLocal() {
   int nNumTries = 0;
   while (spLocalWindowKFs.size() < numTemporalKFs && nNumTries < nMaxTries) {
     vector<KeyFrame *> vpNewCovKFs;
-    vpNewCovKFs.empty();
     for (KeyFrame *pKFi : spLocalWindowKFs) {
       vector<KeyFrame *> vpKFiCov =
           pKFi->GetBestCovisibilityKeyFrames(numTemporalKFs / 2);
@@ -1373,7 +1372,6 @@ void LoopClosing::MergeLocal() {
         }
       }
     }
-
     spLocalWindowKFs.insert(vpNewCovKFs.begin(), vpNewCovKFs.end());
     nNumTries++;
   }

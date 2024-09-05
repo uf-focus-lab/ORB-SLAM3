@@ -19,12 +19,12 @@
  * ORB-SLAM3. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
-
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ImuTypes.h"
 #include <mutex>
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 
@@ -39,19 +39,14 @@ KeyFrame::KeyFrame()
       mnRelocWords(0), mnMergeQuery(0), mnMergeWords(0), mnBAGlobalForKF(0),
       fx(0), fy(0), cx(0), cy(0), invfx(0), invfy(0),
       mnPlaceRecognitionQuery(0), mnPlaceRecognitionWords(0),
-      mPlaceRecognitionScore(0), mbf(0), mb(0), mThDepth(0), N(0),
-      mvKeys(static_cast<vector<cv::KeyPoint>>(NULL)),
-      mvKeysUn(static_cast<vector<cv::KeyPoint>>(NULL)),
-      mvuRight(static_cast<vector<float>>(NULL)),
-      mvDepth(static_cast<vector<float>>(NULL)), mnScaleLevels(0),
-      mfScaleFactor(0), mfLogScaleFactor(0), mvScaleFactors(0),
-      mvLevelSigma2(0), mvInvLevelSigma2(0), mnMinX(0), mnMinY(0), mnMaxX(0),
-      mnMaxY(0), mPrevKF(static_cast<KeyFrame *>(NULL)),
-      mNextKF(static_cast<KeyFrame *>(NULL)), mbFirstConnection(true),
-      mpParent(NULL), mbNotErase(false), mbToBeErased(false), mbBad(false),
-      mHalfBaseline(0), mbCurrentPlaceRecognition(false),
-      mnMergeCorrectedForKF(0), NLeft(0), NRight(0), mnNumberOfOpt(0),
-      mbHasVelocity(false) {}
+      mPlaceRecognitionScore(0), mbf(0), mb(0), mThDepth(0), N(0), mvKeys(),
+      mvKeysUn(), mvuRight(), mvDepth(), mnScaleLevels(0), mfScaleFactor(0),
+      mfLogScaleFactor(0), mvScaleFactors(0), mvLevelSigma2(0),
+      mvInvLevelSigma2(0), mnMinX(0), mnMinY(0), mnMaxX(0), mnMaxY(0),
+      mPrevKF(NULL), mNextKF(NULL), mbFirstConnection(true), mpParent(NULL),
+      mbNotErase(false), mbToBeErased(false), mbBad(false), mHalfBaseline(0),
+      mbCurrentPlaceRecognition(false), mnMergeCorrectedForKF(0), NLeft(0),
+      NRight(0), mnNumberOfOpt(0), mbHasVelocity(false) {}
 
 KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB)
     : bImu(pMap->isImuInitialized()), mnFrameId(F.mnId),

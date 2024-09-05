@@ -1,5 +1,12 @@
 # ORB-SLAM3
 
+### Actively Maintained Fork of ORB_SLAM3
+
++ Replaced shallow copies of thirdparty libraries with up-to-date versions.
++ Code formatted with `clang-format`.
++ Continuously refactoring code structure.
++ New features planned to be added.
+
 ### V1.0, December 22th, 2021
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 

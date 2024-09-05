@@ -3,12 +3,12 @@ thirdparty_targets := DBoW2 g2o Sophus Pangolin
 thirdparty_build_targets := $(patsubst %,thirdparty/%,$(thirdparty_targets))
 
 $(thirdparty_build_targets):
-	$(eval PROJ := thirdparty/build/$(notdir $@))
+	$(eval PROJ := build/thirdparty/$(notdir $@))
 	$(info Configuring and building $(PROJ) ...)
-	@ mkdir -p $(PROJ) $(PWD)/thirdparty/lib
+	@ mkdir -p $(PROJ) $(PWD)/lib/thirdparty
 	cmake \
 	  -DCMAKE_BUILD_TYPE=Release \
-	  -DCMAKE_INSTALL_PREFIX:PATH=$(PWD)/thirdparty/lib/$$(basename $@) \
+	  -DCMAKE_INSTALL_PREFIX:PATH=$(PWD)/lib/thirdparty/$$(basename $@) \
 	  -S $@ \
 	  -B $(PROJ)
 	@ cd $(PROJ) && make install -j
