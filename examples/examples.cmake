@@ -1,7 +1,7 @@
 
 
 # RGB-D examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 add_executable(rgbd_tum
         examples/RGB-D/rgbd_tum.cc)
@@ -15,7 +15,7 @@ endif()
 
 
 # RGB-D inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 if(realsense2_FOUND)
     add_executable(rgbd_inertial_realsense_D435i
@@ -24,7 +24,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 add_executable(stereo_kitti
         examples/Stereo/stereo_kitti.cc)
@@ -49,7 +49,7 @@ if(realsense2_FOUND)
 endif()
 
 #Monocular examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 add_executable(mono_tum
         examples/Monocular/mono_tum.cc)
@@ -78,7 +78,7 @@ if(realsense2_FOUND)
 endif()
 
 #Monocular inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 add_executable(mono_inertial_euroc
         examples/Monocular-Inertial/mono_inertial_euroc.cc)
@@ -99,7 +99,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo Inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 
 add_executable(stereo_inertial_euroc
         examples/Stereo-Inertial/stereo_inertial_euroc.cc)
@@ -119,7 +119,7 @@ if(realsense2_FOUND)
     target_link_libraries(stereo_inertial_realsense_D435i ${PROJECT_NAME})
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/examples)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/examples/bin)
 if(realsense2_FOUND)
     add_executable(recorder_realsense_D435i
             examples/Calibration/recorder_realsense_D435i.cc)
