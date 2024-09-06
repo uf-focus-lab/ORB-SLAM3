@@ -1,34 +1,6 @@
+# All hidden files
 .*
 
-KeyFrameTrajectory.txt
-CameraTrajectory.txt
-kf_*.txt
-f_*.txt
-vocabulary/ORBvoc.txt
-
+# CMake compile cache and outputs
 build/
-lib/
-bin/
-
-cmake_modules/
-cmake-build-debug/
-
-ExecMean.txt
-SessionInfo.txt
-Results_Euroc.txt
-LBA_Stats.txt
-LocalMapTimeStats.txt
-TrackLocalMapStats.txt
-TrackingTimeStats.txt
-time*
-Time*
-Table_Euroc
-Table_TUMVI_rooms/
-*.pyc
-*.osa
-.idea/
-my_settings.txt
-
-borrar/*
-
-*/ExecMean.txt
+install/

@@ -2,28 +2,34 @@
 # Author: Yuxuan Zhang
 CC:=clang
 CXX:=clang++
-BUILD_DIR:=build/ORB_SLAM3
+# Default output locations
+BUILD_DIR?=$(PWD)/build
+INSTALL_DIR?=$(PWD)/install
 
-ORB_SLAM3: vocabulary/ORBvoc.txt
-	$(info Configuring and building ORB_SLAM3 ...)
+all: deps core assets/ORBvoc.txt
+
+core:
+	$(info Configuring and building ORB_SLAM3 core ...)
+	$(eval BUILD_DIR:=$(PWD)/build/ORB_SLAM3)
 	@ mkdir -p $(BUILD_DIR)
 	@ cmake \
 		-DCMAKE_BUILD_TYPE=Release \
-	  	-S . \
+	  	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
+	  	-S $@ \
 		-B $(BUILD_DIR)
 	@ cd $(BUILD_DIR) && make -j
 
-vocabulary/ORBvoc.txt: vocabulary/ORBvoc.txt.tar.gz
+assets/ORBvoc.txt: assets/ORBvoc.txt.tar.gz
 	$(info Uncompressing vocabulary ...)
-	@ cd vocabulary && tar -xf ORBvoc.txt.tar.gz
+	@ cd assets && tar -xf ORBvoc.txt.tar.gz
 
 clean:
 	$(info Cleaning vocabulary ...)
-	@ cd vocabulary && rm -rf ORBvoc.txt
-	$(info Cleaning ORB_SLAM3 ...)
-	@ rm -rf $(BUILD_DIR) lib/libORB_SLAM3.so bin
+	@ rm -rf assets/ORBvoc.txt
+	$(info Cleaning build and install directory ...)
+	@ rm -rf ./build/* $(INSTALL_DIR)
 
 # Thirdparty make scripts
 include scripts/*.mk
 
-.PHONY: *.build clean *.clean init
+.PHONY: core clean
