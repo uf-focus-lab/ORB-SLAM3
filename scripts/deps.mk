@@ -22,6 +22,6 @@ deps: deps.init $(deps_targets)
 
 deps.init:
 	$(info Initializing submodules ...)
-	@ git submodule update --init --recursive --remote
+	@ git submodule update --init
 
 .PHONY: deps.init $(deps_targets)
