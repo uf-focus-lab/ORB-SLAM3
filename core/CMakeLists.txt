@@ -23,7 +23,6 @@ find_package(Sophus REQUIRED PATHS ${CMAKE_INSTALL_PREFIX})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/include/CameraModels
     ${Pangolin_INCLUDE_DIRS}
     ${DBoW2_INCLUDE_DIRS}
 )
@@ -31,12 +30,6 @@ include_directories(
 FILE(GLOB SOURCES src/*.cc src/**/*.cc)
 FILE(GLOB HEADERS include/*.h include/**/*.h)
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
-# Install the shared library (.so) to the lib directory
-install(TARGETS ${PROJECT_NAME}
-        LIBRARY DESTINATION lib)
-# Install header files to core/include
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/include/
-        DESTINATION include)
 
 target_link_libraries(${PROJECT_NAME}
     -lboost_serialization
@@ -76,3 +69,15 @@ if(realsense2_FOUND)
     ${realsense2_LIBRARY}
     )
 endif()
+
+# Generate configuration file
+configure_file(
+  ${PROJECT_SOURCE_DIR}/../scripts/config.cmake.in
+  "${PROJECT_BINARY_DIR}/ORB_SLAM3Config.cmake" @ONLY
+)
+
+# Install the library
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ORB_SLAM3)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ORB_SLAM3Config.cmake"
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})

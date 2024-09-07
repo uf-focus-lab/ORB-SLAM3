@@ -17,7 +17,7 @@ core:
 	  	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
 	  	-S $@ \
 		-B $(BUILD_DIR)
-	@ cd $(BUILD_DIR) && make -j
+	@ cd $(BUILD_DIR) && make install -j
 
 assets/ORBvoc.txt: assets/ORBvoc.txt.tar.gz
 	$(info Uncompressing vocabulary ...)

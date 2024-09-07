@@ -22,8 +22,8 @@
 #define ATLAS_H
 
 #include "CameraModels/Pinhole.h"
-#include "GeometricCamera.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/GeometricCamera.h"
+#include "CameraModels/KannalaBrandt8.h"
 #include "KeyFrame.h"
 #include "Map.h"
 #include "MapPoint.h"

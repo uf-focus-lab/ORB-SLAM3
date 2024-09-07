@@ -26,7 +26,7 @@
 #include "FrameDrawer.h"
 #include "G2oTypes.h"
 #include "GeometricTools.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/KannalaBrandt8.h"
 #include "MLPnPsolver.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"

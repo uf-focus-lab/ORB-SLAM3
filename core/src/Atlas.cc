@@ -23,8 +23,8 @@
 #include "Viewer.h"
 
 #include "CameraModels/Pinhole.h"
-#include "GeometricCamera.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/GeometricCamera.h"
+#include "CameraModels/KannalaBrandt8.h"
 
 using namespace std;
 

@@ -207,7 +207,7 @@ public:
 
   void printMeasurements() const {
     cout << "pint meas:\n";
-    for (int i = 0; i < mvMeasurements.size(); i++) {
+    for (size_t i = 0; i < mvMeasurements.size(); i++) {
       cout << "meas " << mvMeasurements[i].t << endl;
     }
     cout << "end pint meas:\n";

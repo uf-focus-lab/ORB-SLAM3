@@ -25,7 +25,7 @@
 
 #include "Converter.h"
 #include "G2oTypes.h"
-#include "GeometricCamera.h"
+#include "CameraModels/GeometricCamera.h"
 #include "KeyFrame.h"
 #include "MapPoint.h"
 #include "ORBextractor.h"

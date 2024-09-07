@@ -37,10 +37,10 @@ using namespace std;
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
 #include "Settings.h"
-#include "System.h"
+#include "ORB_SLAM3.h"
 #include "Viewer.h"
 
-#include "GeometricCamera.h"
+#include "CameraModels/GeometricCamera.h"
 
 #include <mutex>
 #include <unordered_set>
