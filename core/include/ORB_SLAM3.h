@@ -175,14 +175,23 @@ public:
   void SaveTrajectoryKITTI(const string &filename);
 
   // TODO: Save/Load functions
-  // SaveMap(const string &filename);
+  bool SaveMap(const string &filename);
   // LoadMap(const string &filename);
 
   // Information from most recent processed frame
   // You can call this right after TrackMonocular (or stereo or RGBD)
   int GetTrackingState();
-  vector<MapPoint *> GetTrackedMapPoints();
-  vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+  std::vector<MapPoint *> GetTrackedMapPoints();
+  std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+  std::vector<cv::KeyPoint> GetTrackedKeyPoints();
+  std::vector<MapPoint *> GetAllMapPoints();
+  std::vector<Sophus::SE3f> GetAllKeyframePoses();
+  cv::Mat GetCurrentFrame();
+
+  Sophus::SE3f GetCamTwc();
+  Sophus::SE3f GetImuTwb();
+  Eigen::Vector3f GetImuVwb();
+  bool isImuPreintegrated();
 
   // For debugging
   double GetTimeFromIMUInit();
@@ -200,7 +209,7 @@ public:
 #endif
 
 private:
-  void SaveAtlas(int type);
+  bool SaveAtlas(int type);
   bool LoadAtlas(int type);
 
   string CalculateCheckSum(string filename, int type);
@@ -263,6 +272,7 @@ private:
   int mTrackingState;
   vector<MapPoint *> mTrackedMapPoints;
   vector<cv::KeyPoint> mTrackedKeyPointsUn;
+  vector<cv::KeyPoint> mTrackedKeyPoints;
   mutex mMutexState;
 
   //

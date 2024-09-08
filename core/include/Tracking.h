@@ -102,6 +102,11 @@ public:
                       KeyFrame *pCurrentKeyFrame);
   KeyFrame *GetLastKeyFrame() { return mpLastKeyFrame; }
 
+  Sophus::SE3f GetCamTwc();
+  Sophus::SE3f GetImuTwb();
+  Eigen::Vector3f GetImuVwb();
+  bool isImuPreintegrated();
+
   void CreateMapInAtlas();
   // mutex mMutexTracks;
 

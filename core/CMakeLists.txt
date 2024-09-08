@@ -59,7 +59,6 @@ link_libraries(
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
-add_executable(example example/example.cc ${SOURCES})
 
 # Generate configuration file
 configure_file(

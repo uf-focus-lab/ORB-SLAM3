@@ -308,7 +308,7 @@ void Atlas::PostLoad() {
   mvpBackupMaps.clear();
 }
 
-void Atlas::SetKeyFrameDababase(KeyFrameDatabase *pKFDB) {
+void Atlas::SetKeyFrameDatabase(KeyFrameDatabase *pKFDB) {
   mpKeyFrameDB = pKFDB;
 }
 
