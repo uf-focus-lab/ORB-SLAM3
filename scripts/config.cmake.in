@@ -1,7 +1,37 @@
 FIND_LIBRARY(ORB_SLAM3_LIBRARIES ORB_SLAM3
     PATHS "@CMAKE_INSTALL_PREFIX@/lib"
 )
+
+SET(ORB_SLAM3_LIBS ${ORB_SLAM3_LIBRARIES})
+
 FIND_PATH(ORB_SLAM3_INCLUDE_DIR ORB_SLAM3.h
     PATHS "@CMAKE_INSTALL_PREFIX@/include/@PROJECT_NAME@" 
 )
+
 LIST(APPEND ORB_SLAM3_INCLUDE_DIR ${ORB_SLAM3_INCLUDE_DIR}/../)
+
+# Make G2O happy
+
+SET(G2O_LIBRARIES
+   g2o::core
+   g2o::stuff
+   g2o::opengl_helper
+   g2o::g2o_cli_library
+   g2o::g2o_simulator_library
+   g2o::types_slam2d
+   g2o::types_slam2d_addons
+   g2o::types_sclam2d
+   g2o::types_slam3d
+   g2o::types_slam3d_addons
+   g2o::types_sba
+   g2o::types_icp
+   g2o::types_sim3
+   g2o::solver_pcg
+   g2o::solver_dense
+   g2o::solver_slam2d_linear
+   g2o::solver_structure_only
+   g2o::solver_eigen
+   g2o::g2o_hierarchical_library
+)
+
+SET(G2O_LIBS ${G2O_LIBRARIES})

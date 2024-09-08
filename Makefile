@@ -18,6 +18,7 @@ core:
 	  	-S $@ \
 		-B $(BUILD_DIR)
 	@ cd $(BUILD_DIR) && make install -j
+	@ ln -s $(BUILD_DIR)/compile_commands.json $(PWD)
 
 assets/ORBvoc.txt: assets/ORBvoc.txt.tar.gz
 	$(info Uncompressing vocabulary ...)

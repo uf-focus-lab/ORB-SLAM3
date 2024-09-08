@@ -12,7 +12,6 @@ cmake_policy(SET CMP0072 NEW)
 # System package manager managed packages
 find_package(OpenCV 4.4 REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
-find_package(realsense2)
 
 # Packages under "../install" directory
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
@@ -29,9 +28,8 @@ include_directories(
 
 FILE(GLOB SOURCES src/*.cc src/**/*.cc)
 FILE(GLOB HEADERS include/*.h include/**/*.h)
-add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME}
+link_libraries(
     -lboost_serialization
     -lcrypto
     ${OpenCV_LIBS}
@@ -60,15 +58,8 @@ target_link_libraries(${PROJECT_NAME}
     g2o::g2o_hierarchical_library
 )
 
-# If RealSense SDK is found the library is added and its examples compiled
-if(realsense2_FOUND)
-    include_directories(${PROJECT_NAME}
-    ${realsense_INCLUDE_DIR}
-    )
-    target_link_libraries(${PROJECT_NAME}
-    ${realsense2_LIBRARY}
-    )
-endif()
+add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+add_executable(example example/example.cc ${SOURCES})
 
 # Generate configuration file
 configure_file(

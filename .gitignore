@@ -1,6 +1,9 @@
 # All hidden files
 .*
 
+# Compile database
+compile_commands.json
+
 # CMake compile cache and outputs
 build/
 install/
