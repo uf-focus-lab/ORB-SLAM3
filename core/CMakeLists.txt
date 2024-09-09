@@ -26,9 +26,6 @@ include_directories(
     ${DBoW2_INCLUDE_DIRS}
 )
 
-FILE(GLOB SOURCES src/*.cc src/**/*.cc)
-FILE(GLOB HEADERS include/*.h include/**/*.h)
-
 link_libraries(
     -lboost_serialization
     -lcrypto
@@ -58,6 +55,8 @@ link_libraries(
     g2o::g2o_hierarchical_library
 )
 
+FILE(GLOB SOURCES src/*.cc src/**/*.cc)
+FILE(GLOB HEADERS include/*.h include/**/*.h)
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
 # Generate configuration file
