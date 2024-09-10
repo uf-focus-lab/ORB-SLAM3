@@ -25,21 +25,45 @@
 #include <DBoW2/TemplatedVocabulary.h>
 namespace ORB_SLAM3 {
 
+using namespace std;
 using namespace DBoW2;
 
 typedef TemplatedVocabulary<FORB::TDescriptor, FORB> TplVoc;
 
+typedef enum FileType {
+  UNKNOWN = 0b00,
+  BINARY = 0b01,
+  TEXT = 0b10,
+  MARKUP = 0b11
+} FileType;
+
 class ORBVocabulary : public TplVoc {
+  // Binary Interfaces
+  typedef struct {
+    decltype(ORBVocabulary::m_k) k;
+    decltype(ORBVocabulary::m_L) L;
+    decltype(ORBVocabulary::m_scoring) s;
+    decltype(ORBVocabulary::m_weighting) w;
+  } BinHeader;
+  typedef struct {
+    decltype(Node::parent) parent;
+    unsigned char is_leaf;
+    unsigned char descriptor[FORB::L];
+    decltype(Node::weight) weight;
+  } BinNode;
+  // Extended functions
+  bool loadFromText(const string &filename);
+  bool saveAsText(const string &filename);
+  bool loadFromBinary(const string &filename);
+  bool saveAsBinary(const string &filename);
+  FileType inferFileType(const string &filename);
 public:
   ORBVocabulary(int k = 10, int L = 5, WeightingType weighting = TF_IDF,
-                ScoringType scoring = L1_NORM)
-      : TplVoc(k, L, weighting, scoring) {}
-  ORBVocabulary(const std::string &filename) : TplVoc(filename){};
-  ORBVocabulary(const char *filename) : TplVoc(filename){};
-  ORBVocabulary(const TplVoc &voc) : TplVoc(voc){};
-  // Extended functions
-  bool loadFromTextFile(const std::string &filename);
-  bool saveToTextFile(const std::string &filename);
+                ScoringType scoring = L1_NORM);
+  ORBVocabulary(const TplVoc &voc);
+  ORBVocabulary(const string &filename, FileType type = FileType::UNKNOWN);
+  bool load(const string &filename, FileType type = FileType::UNKNOWN);
+  bool save(const string &filename, FileType type = FileType::UNKNOWN);
 };
 
 } // namespace ORB_SLAM3

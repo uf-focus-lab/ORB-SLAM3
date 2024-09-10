@@ -119,7 +119,7 @@ System::System(const string &strVocFile, const string &strSettingsFile,
     // Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
     mpVocabulary = new ORBVocabulary();
-    mpVocabulary->loadFromTextFile(strVocFile);
+    mpVocabulary->load(strVocFile);
     cout << "Vocabulary loaded!" << endl << endl;
 
     // Create KeyFrame Database
@@ -131,7 +131,7 @@ System::System(const string &strVocFile, const string &strSettingsFile,
   } else {
     cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
     mpVocabulary = new ORBVocabulary();
-    mpVocabulary->loadFromTextFile(strVocFile);
+    mpVocabulary->load(strVocFile);
     cout << "Vocabulary loaded!" << endl << endl;
 
     // Create KeyFrame Database
