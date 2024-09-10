@@ -4,7 +4,7 @@
 namespace Vocabulary {
 
 typedef struct word {
-  uint32_t id;
+  uint32_t node_id;
   uint8_t data[33];
   double weight;
 } Word;

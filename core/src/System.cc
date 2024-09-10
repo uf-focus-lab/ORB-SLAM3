@@ -117,15 +117,10 @@ System::System(const string &strVocFile, const string &strSettingsFile,
 
   if (mStrLoadAtlasFromFile.empty()) {
     // Load ORB Vocabulary
-    try {
-      cout << endl << "Loading ORB Vocabulary ..." << endl;
-      mpVocabulary = new ORBVocabulary(strVocFile);
-      cout << "Vocabulary loaded!" << endl << endl;
-    } catch (std::string &e) {
-      cerr << "Error opening vocabulary file at " << strVocFile << endl
-           << e << endl;
-      exit(-1);
-    }
+    cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
+    mpVocabulary = new ORBVocabulary();
+    mpVocabulary->loadFromTextFile(strVocFile);
+    cout << "Vocabulary loaded!" << endl << endl;
 
     // Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -134,15 +129,10 @@ System::System(const string &strVocFile, const string &strSettingsFile,
     cout << "Initialization of Atlas from scratch " << endl;
     mpAtlas = new Atlas(0);
   } else {
-    try {
-      cout << endl << "Loading ORB Vocabulary ..." << endl;
-      mpVocabulary = new ORBVocabulary(strVocFile);
-      cout << "Vocabulary loaded!" << endl << endl;
-    } catch (std::string &e) {
-      cerr << "Error opening vocabulary file at " << strVocFile << endl
-           << e << endl;
-      exit(-1);
-    }
+    cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
+    mpVocabulary = new ORBVocabulary();
+    mpVocabulary->loadFromTextFile(strVocFile);
+    cout << "Vocabulary loaded!" << endl << endl;
 
     // Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);

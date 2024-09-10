@@ -21,15 +21,26 @@
 #ifndef ORBVOCABULARY_H
 #define ORBVOCABULARY_H
 
-using namespace std;
-
 #include <DBoW2/FORB.h>
 #include <DBoW2/TemplatedVocabulary.h>
-
 namespace ORB_SLAM3 {
 
-typedef DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>
-    ORBVocabulary;
+using namespace DBoW2;
+
+typedef TemplatedVocabulary<FORB::TDescriptor, FORB> TplVoc;
+
+class ORBVocabulary : public TplVoc {
+public:
+  ORBVocabulary(int k = 10, int L = 5, WeightingType weighting = TF_IDF,
+                ScoringType scoring = L1_NORM)
+      : TplVoc(k, L, weighting, scoring) {}
+  ORBVocabulary(const std::string &filename) : TplVoc(filename){};
+  ORBVocabulary(const char *filename) : TplVoc(filename){};
+  ORBVocabulary(const TplVoc &voc) : TplVoc(voc){};
+  // Extended functions
+  bool loadFromTextFile(const std::string &filename);
+  bool saveToTextFile(const std::string &filename);
+};
 
 } // namespace ORB_SLAM3
 
