@@ -117,7 +117,8 @@ System::System(const string &strVocFile, const string &strSettingsFile,
 
   if (mStrLoadAtlasFromFile.empty()) {
     // Load ORB Vocabulary
-    cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
+    cout << endl
+         << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
     mpVocabulary = new ORBVocabulary();
     mpVocabulary->load(strVocFile);
     cout << "Vocabulary loaded!" << endl << endl;
@@ -129,7 +130,8 @@ System::System(const string &strVocFile, const string &strSettingsFile,
     cout << "Initialization of Atlas from scratch " << endl;
     mpAtlas = new Atlas(0);
   } else {
-    cout << endl << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
+    cout << endl
+         << "Loading ORB Vocabulary From " << strVocFile << " ..." << endl;
     mpVocabulary = new ORBVocabulary();
     mpVocabulary->load(strVocFile);
     cout << "Vocabulary loaded!" << endl << endl;
@@ -650,12 +652,21 @@ void System::SaveTrajectoryEuRoC(const string &filename) {
   cout << "There are " << to_string(vpMaps.size()) << " maps in the atlas"
        << endl;
   for (Map *pMap : vpMaps) {
+    if (!pMap) {
+      cerr << "  Map is NULL" << endl;
+      continue;
+    }
     cout << "  Map " << to_string(pMap->GetId()) << " has "
          << to_string(pMap->GetAllKeyFrames().size()) << " KFs" << endl;
     if (pMap->GetAllKeyFrames().size() > numMaxKFs) {
       numMaxKFs = pMap->GetAllKeyFrames().size();
       pBiggerMap = pMap;
     }
+  }
+
+  if (numMaxKFs == 0 || !pBiggerMap) {
+    cerr << "Trajectory NOT saved: no keyframe in maps" << endl;
+    return;
   }
 
   vector<KeyFrame *> vpKFs = pBiggerMap->GetAllKeyFrames();
