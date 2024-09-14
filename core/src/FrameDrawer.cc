@@ -45,7 +45,8 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale) {
   vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
   vector<bool> vbVO, vbMap;          // Tracked MapPoints in current frame
   vector<pair<cv::Point2f, cv::Point2f>> vTracks;
-  int state; // Tracking state
+  int state;  // Tracking state
+  string msg; // Optional state message
   vector<float> vCurrentDepth;
   float thDepth;
 
@@ -65,17 +66,18 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale) {
   {
     unique_lock<mutex> lock(mMutex);
     state = mState;
-    if (mState == Tracking::SYSTEM_NOT_READY)
-      mState = Tracking::NO_IMAGES_YET;
+    msg = strStateMsg;
+    if (state == Tracking::SYSTEM_NOT_READY)
+      state = Tracking::NO_IMAGES_YET;
 
     mIm.copyTo(im);
 
-    if (mState == Tracking::NOT_INITIALIZED) {
+    if (state == Tracking::NOT_INITIALIZED) {
       vCurrentKeys = mvCurrentKeys;
       vIniKeys = mvIniKeys;
       vMatches = mvIniMatches;
       vTracks = mvTracks;
-    } else if (mState == Tracking::OK) {
+    } else if (state == Tracking::OK) {
       vCurrentKeys = mvCurrentKeys;
       vbVO = mvbVO;
       vbMap = mvbMap;
@@ -91,8 +93,7 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale) {
 
       vCurrentDepth = mvCurrentDepth;
       thDepth = mThDepth;
-
-    } else if (mState == Tracking::LOST) {
+    } else if (state == Tracking::LOST) {
       vCurrentKeys = mvCurrentKeys;
     }
   }
@@ -177,7 +178,7 @@ cv::Mat FrameDrawer::DrawFrame(float imageScale) {
   }
 
   cv::Mat imWithInfo;
-  DrawTextInfo(im, state, imWithInfo);
+  DrawTextInfo(im, state, msg, imWithInfo);
 
   return imWithInfo;
 }
@@ -190,25 +191,27 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale) {
   vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
   vector<bool> vbVO, vbMap;          // Tracked MapPoints in current frame
   int state;                         // Tracking state
+  string msg;
 
   // Copy variables within scoped mutex
   {
     unique_lock<mutex> lock(mMutex);
     state = mState;
-    if (mState == Tracking::SYSTEM_NOT_READY)
-      mState = Tracking::NO_IMAGES_YET;
+    msg = strStateMsg;
+    if (state == Tracking::SYSTEM_NOT_READY)
+      state = Tracking::NO_IMAGES_YET;
 
     mImRight.copyTo(im);
 
-    if (mState == Tracking::NOT_INITIALIZED) {
+    if (state == Tracking::NOT_INITIALIZED) {
       vCurrentKeys = mvCurrentKeysRight;
       vIniKeys = mvIniKeys;
       vMatches = mvIniMatches;
-    } else if (mState == Tracking::OK) {
+    } else if (state == Tracking::OK) {
       vCurrentKeys = mvCurrentKeysRight;
       vbVO = mvbVO;
       vbMap = mvbMap;
-    } else if (mState == Tracking::LOST) {
+    } else if (state == Tracking::LOST) {
       vCurrentKeys = mvCurrentKeysRight;
     }
   } // destroy scoped mutex -> release mutex
@@ -284,17 +287,18 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale) {
   }
 
   cv::Mat imWithInfo;
-  DrawTextInfo(im, state, imWithInfo);
+  DrawTextInfo(im, state, msg, imWithInfo);
 
   return imWithInfo;
 }
 
-void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText) {
+void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, string &msg,
+                               cv::Mat &imText) {
   stringstream s;
   if (nState == Tracking::NO_IMAGES_YET)
     s << " WAITING FOR IMAGES";
   else if (nState == Tracking::NOT_INITIALIZED)
-    s << " TRYING TO INITIALIZE ";
+    s << " TRYING TO INITIALIZE - " << msg;
   else if (nState == Tracking::OK) {
     if (!mbOnlyTracking)
       s << "SLAM MODE |  ";
@@ -328,6 +332,8 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText) {
 void FrameDrawer::Update(Tracking *pTracker) {
   unique_lock<mutex> lock(mMutex);
   pTracker->mImGray.copyTo(mIm);
+  mState = pTracker->mState;
+  strStateMsg = pTracker->ssStateMsg.str();
   mvCurrentKeys = pTracker->mCurrentFrame.mvKeys;
   mThDepth = pTracker->mCurrentFrame.mThDepth;
   mvCurrentDepth = pTracker->mCurrentFrame.mvDepth;

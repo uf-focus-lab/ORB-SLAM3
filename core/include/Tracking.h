@@ -43,7 +43,7 @@ using namespace std;
 #include "CameraModels/GeometricCamera.h"
 
 #include <mutex>
-#include <unordered_set>
+#include <sstream>
 
 namespace ORB_SLAM3 {
 
@@ -145,6 +145,8 @@ public:
   eTrackingState mState;
   eTrackingState mLastProcessedState;
 
+  stringstream ssStateMsg;
+
   // Input sensor
   int mSensor;
 
@@ -212,10 +214,10 @@ protected:
   void Track();
 
   // Map initialization for stereo and RGB-D
-  void StereoInitialization();
+  void InitializeStereo();
 
   // Map initialization for monocular
-  void MonocularInitialization();
+  void InitializeMonocular();
   // void CreateNewMapPoints();
   void CreateInitialMapMonocular();
 
@@ -282,7 +284,7 @@ protected:
   KeyFrameDatabase *mpKeyFrameDB;
 
   // Initalization (only for monocular)
-  bool mbReadyToInitializate;
+  bool mbReadyToInitialize;
   bool mbSetInit;
 
   // Local Map

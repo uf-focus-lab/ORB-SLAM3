@@ -53,7 +53,7 @@ public:
   bool both;
 
 protected:
-  void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
+  void DrawTextInfo(cv::Mat &im, int nState, string &msg, cv::Mat &imText);
 
   // Info of the frame to be drawn
   cv::Mat mIm, mImRight;
@@ -65,6 +65,7 @@ protected:
   vector<cv::KeyPoint> mvIniKeys;
   vector<int> mvIniMatches;
   int mState;
+  string strStateMsg;
   vector<float> mvCurrentDepth;
   float mThDepth;
 

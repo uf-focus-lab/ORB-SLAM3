@@ -2326,7 +2326,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
   const bool bImuInit = pActiveMap->isImuInitialized();
 
   if (!bImuInit)
-    Optimizer::GlobalBundleAdjustemnt(pActiveMap, 10, &mbStopGBA, nLoopKF,
+    Optimizer::GlobalBundleAdjustment(pActiveMap, 10, &mbStopGBA, nLoopKF,
                                       false);
   else
     Optimizer::FullInertialBA(pActiveMap, 7, false, nLoopKF, &mbStopGBA);
@@ -2345,7 +2345,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
 #endif
 
   int idx = mnFullBAIdx;
-  // Optimizer::GlobalBundleAdjustemnt(mpMap,10,&mbStopGBA,nLoopKF,false);
+  // Optimizer::GlobalBundleAdjustment(mpMap,10,&mbStopGBA,nLoopKF,false);
 
   // Update all MapPoints and KeyFrames
   // Local Mapping was active during BA, that means that there might be new

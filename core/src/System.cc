@@ -1352,6 +1352,27 @@ int System::GetTrackingState() {
   return mTrackingState;
 }
 
+const char *System::GetTrackingStateName() {
+  switch (GetTrackingState()) {
+  case (-1):
+    return "SYSTEM_NOT_READY";
+  case (0):
+    return "NO_IMAGES_YET";
+  case (1):
+    return "NOT_INITIALIZED";
+  case (2):
+    return "OK";
+  case (3):
+    return "RECENTLY_LOST";
+  case (4):
+    return "LOST";
+  case (5):
+    return "OK_KLT";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 vector<MapPoint *> System::GetTrackedMapPoints() {
   unique_lock<mutex> lock(mMutexState);
   return mTrackedMapPoints;

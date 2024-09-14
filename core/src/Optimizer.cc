@@ -41,7 +41,7 @@ bool sortByVal(const pair<MapPoint *, int> &a, const pair<MapPoint *, int> &b) {
   return (a.second < b.second);
 }
 
-void Optimizer::GlobalBundleAdjustemnt(Map *pMap, int nIterations,
+void Optimizer::GlobalBundleAdjustment(Map *pMap, int nIterations,
                                        bool *pbStopFlag,
                                        const unsigned long nLoopKF,
                                        const bool bRobust) {

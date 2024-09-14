@@ -28,6 +28,7 @@
 #include "G2oTypes.h"
 #include "GeometricTools.h"
 #include "MLPnPsolver.h"
+#include "ORBextractor.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
 
@@ -46,7 +47,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
                    const int sensor, Settings *settings, const string &_nameSeq)
     : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
       mbOnlyTracking(false), mbMapUpdated(false), mbVO(false),
-      mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB), mbReadyToInitializate(false),
+      mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB), mbReadyToInitialize(false),
       mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
       mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas),
       mnLastRelocFrameId(0), time_recently_lost(5.0), mnInitialFrameId(0),
@@ -1751,15 +1752,15 @@ void Tracking::Track() {
   if (mState == NOT_INITIALIZED) {
     if (mSensor == System::STEREO || mSensor == System::RGBD ||
         mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
-      StereoInitialization();
+      InitializeStereo();
     } else {
-      MonocularInitialization();
+      InitializeMonocular();
     }
 
-    // mpFrameDrawer->Update(this);
+    mpFrameDrawer->Update(this);
 
-    if (mState != OK) // If rightly initialized, mState=OK
-    {
+    // Check if initialization was successful
+    if (mState != OK) {
       mLastFrame = Frame(mCurrentFrame);
       return;
     }
@@ -2153,7 +2154,7 @@ void Tracking::Track() {
 #endif
 }
 
-void Tracking::StereoInitialization() {
+void Tracking::InitializeStereo() {
   if (mCurrentFrame.N > 500) {
     if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
       if (!mCurrentFrame.mpImuPreintegrated || !mLastFrame.mpImuPreintegrated) {
@@ -2264,12 +2265,11 @@ void Tracking::StereoInitialization() {
   }
 }
 
-void Tracking::MonocularInitialization() {
-
-  if (!mbReadyToInitializate) {
+void Tracking::InitializeMonocular() {
+  ssStateMsg.str(string());
+  if (!mbReadyToInitialize) {
     // Set Reference Frame
     if (mCurrentFrame.mvKeys.size() > 100) {
-
       mInitialFrame = Frame(mCurrentFrame);
       mLastFrame = Frame(mCurrentFrame);
       mvbPrevMatched.resize(mCurrentFrame.mvKeysUn.size());
@@ -2286,17 +2286,19 @@ void Tracking::MonocularInitialization() {
             new IMU::Preintegrated(IMU::Bias(), *mpImuCalib);
         mCurrentFrame.mpImuPreintegrated = mpImuPreintegratedFromLastKF;
       }
-
-      mbReadyToInitializate = true;
-
+      mbReadyToInitialize = true;
       return;
+    } else {
+      ssStateMsg << "Too few features (A=" << mCurrentFrame.mvKeys.size()
+                 << ")";
     }
   } else {
     if (((int)mCurrentFrame.mvKeys.size() <= 100) ||
         ((mSensor == System::IMU_MONOCULAR) &&
          (mLastFrame.mTimeStamp - mInitialFrame.mTimeStamp > 1.0))) {
-      mbReadyToInitializate = false;
-
+      mbReadyToInitialize = false;
+      ssStateMsg << "Too few features (B=" << mCurrentFrame.mvKeys.size()
+                 << ")";
       return;
     }
 
@@ -2307,7 +2309,8 @@ void Tracking::MonocularInitialization() {
 
     // Check if there are enough correspondences
     if (nmatches < 100) {
-      mbReadyToInitializate = false;
+      mbReadyToInitialize = false;
+      ssStateMsg << "Too few matches (" << nmatches << ")";
       return;
     }
 
@@ -2329,6 +2332,8 @@ void Tracking::MonocularInitialization() {
       mCurrentFrame.SetPose(Tcw);
 
       CreateInitialMapMonocular();
+    } else {
+      ssStateMsg << "ReconstructWithTwoViews failed";
     }
   }
 }
@@ -2387,7 +2392,9 @@ void Tracking::CreateInitialMapMonocular() {
   Verbose::PrintMess("New Map created with " +
                          to_string(mpAtlas->MapPointsInMap()) + " points",
                      Verbose::VERBOSITY_QUIET);
-  Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20);
+
+  Optimizer::GlobalBundleAdjustment(mpAtlas->GetCurrentMap(), 20);
+  Verbose::PrintMess("Optimization complete", Verbose::VERBOSITY_QUIET);
 
   float medianDepth = pKFini->ComputeSceneMedianDepth(2);
   float invMedianDepth;
@@ -2454,13 +2461,13 @@ void Tracking::CreateInitialMapMonocular() {
   double aux = (mCurrentFrame.mTimeStamp - mLastFrame.mTimeStamp) /
                (mCurrentFrame.mTimeStamp - mInitialFrame.mTimeStamp);
   phi *= aux;
-
+  // DEBUG_MSG("mLastFrame = Frame(mCurrentFrame);");
   mLastFrame = Frame(mCurrentFrame);
-
+  // DEBUG_MSG("mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);");
   mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);
-
+  // DEBUG_MSG("mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());");
   mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
-
+  // DEBUG_MSG("mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);");
   mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);
 
   mState = OK;
@@ -2489,7 +2496,7 @@ void Tracking::CreateMapInAtlas() {
   mbVO =
       false; // Init value for know if there are enough MapPoints in the last KF
   if (mSensor == System::MONOCULAR || mSensor == System::IMU_MONOCULAR) {
-    mbReadyToInitializate = false;
+    mbReadyToInitialize = false;
   }
 
   if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
@@ -3567,7 +3574,7 @@ void Tracking::Reset(bool bLocMap) {
   Frame::nNextId = 0;
   mState = NO_IMAGES_YET;
 
-  mbReadyToInitializate = false;
+  mbReadyToInitialize = false;
   mbSetInit = false;
 
   mlRelativeFramePoses.clear();
@@ -3623,7 +3630,7 @@ void Tracking::ResetActiveMap(bool bLocMap) {
   // mnLastRelocFrameId = mnLastInitFrameId;
   mState = NO_IMAGES_YET; // NOT_INITIALIZED;
 
-  mbReadyToInitializate = false;
+  mbReadyToInitialize = false;
 
   list<bool> lbLost;
   // lbLost.reserve(mlbLost.size());

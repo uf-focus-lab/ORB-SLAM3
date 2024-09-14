@@ -21,8 +21,6 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-using namespace std;
-
 #include <opencv2/core/core.hpp>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +40,20 @@ using namespace std;
 #include "Tracking.h"
 #include "Viewer.h"
 
+#include <cstdio> // IWYU pragma: export
+
+#define STRINGIFY(x) STRINGIFY2(x)
+#define STRINGIFY2(x) #x
+
+#define DEBUG_MSG(...)                                                         \
+  {                                                                            \
+    printf(__FILE__ ":" STRINGIFY(__LINE__) " " __VA_ARGS__);                  \
+    fflush(stdout);                                                            \
+  }
+
 namespace ORB_SLAM3 {
+
+using namespace std;
 
 class Verbose {
 public:
@@ -181,6 +192,7 @@ public:
   // Information from most recent processed frame
   // You can call this right after TrackMonocular (or stereo or RGBD)
   int GetTrackingState();
+  const char *GetTrackingStateName();
   std::vector<MapPoint *> GetTrackedMapPoints();
   std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
   std::vector<cv::KeyPoint> GetTrackedKeyPoints();

@@ -52,7 +52,7 @@ public:
                                int nIterations = 5, bool *pbStopFlag = NULL,
                                const unsigned long nLoopKF = 0,
                                const bool bRobust = true);
-  void static GlobalBundleAdjustemnt(Map *pMap, int nIterations = 5,
+  void static GlobalBundleAdjustment(Map *pMap, int nIterations = 5,
                                      bool *pbStopFlag = NULL,
                                      const unsigned long nLoopKF = 0,
                                      const bool bRobust = true);
