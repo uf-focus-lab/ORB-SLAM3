@@ -6,7 +6,7 @@ CXX:=clang++
 BUILD_DIR?=$(PWD)/build
 INSTALL_DIR?=$(PWD)/install
 
-all: deps core assets/ORBvoc.txt
+all: deps core
 
 core:
 	$(info Configuring and building ORB_SLAM3 core ...)
@@ -20,13 +20,7 @@ core:
 	@ cd $(BUILD_DIR) && make install -j
 	@ ln -sf $(BUILD_DIR)/compile_commands.json $(PWD)
 
-assets/ORBvoc.txt: assets/ORBvoc.txt.tar.gz
-	$(info Uncompressing vocabulary ...)
-	@ cd assets && tar -xf ORBvoc.txt.tar.gz
-
 clean:
-	$(info Cleaning vocabulary ...)
-	@ rm -rf assets/ORBvoc.txt
 	$(info Cleaning build and install directory ...)
 	@ rm -rf ./build/* $(INSTALL_DIR)
 
