@@ -51,6 +51,10 @@
     fflush(stdout);                                                            \
   }
 
+#define DEBUG_FN(FN)                                                           \
+  DEBUG_MSG(#FN "()\n");                                                       \
+  FN
+
 namespace ORB_SLAM3 {
 
 using namespace std;

@@ -28,6 +28,7 @@
 #include "G2oTypes.h"
 #include "GeometricTools.h"
 #include "MLPnPsolver.h"
+#include "ORB_SLAM3.h"
 #include "ORBextractor.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
@@ -2362,7 +2363,7 @@ void Tracking::CreateInitialMapMonocular() {
     // Create MapPoint.
     Eigen::Vector3f worldPos;
     worldPos << mvIniP3D[i].x, mvIniP3D[i].y, mvIniP3D[i].z;
-    MapPoint *pMP = new MapPoint(worldPos, pKFcur, mpAtlas->GetCurrentMap());
+    auto pMP = new MapPoint(worldPos, pKFcur, mpAtlas->GetCurrentMap());
 
     pKFini->AddMapPoint(pMP, i);
     pKFcur->AddMapPoint(pMP, mvIniMatches[i]);

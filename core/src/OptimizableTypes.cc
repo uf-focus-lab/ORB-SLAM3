@@ -19,9 +19,9 @@
  * ORB-SLAM3. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using namespace std;
-
 #include "OptimizableTypes.h"
+
+using namespace std;
 
 namespace ORB_SLAM3 {
 bool EdgeSE3ProjectXYZOnlyPose::read(istream &is) {
@@ -59,10 +59,13 @@ void EdgeSE3ProjectXYZOnlyPose::linearizeOplus() {
   double z = xyz_trans[2];
 
   Eigen::Matrix<double, 3, 6> SE3deriv;
-  SE3deriv << 0.f, z, -y, 1.f, 0.f, 0.f, -z, 0.f, x, 0.f, 1.f, 0.f, y, -x, 0.f,
-      0.f, 0.f, 1.f;
-
-  _jacobianOplusXi = -pCamera->projectJac(xyz_trans) * SE3deriv;
+  SE3deriv << 0.0, z, -y, 1.0, 0.0, 0.0, //
+      /*   */ -z, 0.0, x, 0.0, 1.0, 0.0, //
+      /*   */ y, -x, 0.0, 0.0, 0.0, 1.0;
+  Eigen::Matrix<double, 2, 6> result =
+      -pCamera->projectJac(xyz_trans) * SE3deriv;
+  // fix: direct assignment might cause segfaults
+  copy(result.data(), result.data() + result.size(), _jacobianOplusXi.data());
 }
 
 bool EdgeSE3ProjectXYZOnlyPoseToBody::read(istream &is) {
@@ -102,8 +105,9 @@ void EdgeSE3ProjectXYZOnlyPoseToBody::linearizeOplus() {
   double z_w = X_l[2];
 
   Eigen::Matrix<double, 3, 6> SE3deriv;
-  SE3deriv << 0.f, z_w, -y_w, 1.f, 0.f, 0.f, -z_w, 0.f, x_w, 0.f, 1.f, 0.f, y_w,
-      -x_w, 0.f, 0.f, 0.f, 1.f;
+  SE3deriv << 0.0, z_w, -y_w, 1.0, 0.0, 0.0, //
+      /*   */ -z_w, 0.0, x_w, 0.0, 1.0, 0.0, //
+      /*   */ y_w, -x_w, 0.0, 0.0, 0.0, 1.0;
 
   _jacobianOplusXi =
       -pCamera->projectJac(X_r) * mTrl.rotation().toRotationMatrix() * SE3deriv;
@@ -155,10 +159,13 @@ void EdgeSE3ProjectXYZ::linearizeOplus() {
   _jacobianOplusXi = projectJac * T.rotation().toRotationMatrix();
 
   Eigen::Matrix<double, 3, 6> SE3deriv;
-  SE3deriv << 0.f, z, -y, 1.f, 0.f, 0.f, -z, 0.f, x, 0.f, 1.f, 0.f, y, -x, 0.f,
-      0.f, 0.f, 1.f;
-
-  _jacobianOplusXj = projectJac * SE3deriv;
+  Eigen::Map<Eigen::Matrix<double, 3, 6>> m(nullptr);
+  SE3deriv << 0.0, z, -y, 1.0, 0.0, 0.0, //
+      /*   */ -z, 0.0, x, 0.0, 1.0, 0.0, //
+      /*   */ y, -x, 0.0, 0.0, 0.0, 1.0;
+  Eigen::Matrix<double, 2, 6> result = projectJac * SE3deriv;
+  // fix: direct assignment might cause segfaults
+  copy(result.data(), result.data() + result.size(), _jacobianOplusXj.data());
 }
 
 EdgeSE3ProjectXYZToBody::EdgeSE3ProjectXYZToBody()
@@ -208,8 +215,9 @@ void EdgeSE3ProjectXYZToBody::linearizeOplus() {
   double z = X_l[2];
 
   Eigen::Matrix<double, 3, 6> SE3deriv;
-  SE3deriv << 0.f, z, -y, 1.f, 0.f, 0.f, -z, 0.f, x, 0.f, 1.f, 0.f, y, -x, 0.f,
-      0.f, 0.f, 1.f;
+  SE3deriv << 0.0, z, -y, 1.0, 0.0, 0.0, //
+      /*   */ -z, 0.0, x, 0.0, 1.0, 0.0, //
+      /*   */ y, -x, 0.0, 0.0, 0.0, 1.0;
 
   _jacobianOplusXj =
       -pCamera->projectJac(X_r) * mTrl.rotation().toRotationMatrix() * SE3deriv;
