@@ -28,8 +28,8 @@
 #include "CameraModels/GeometricCamera.h"
 #include "KeyFrame.h"
 #include "MapPoint.h"
-#include "ORBextractor.h"
-#include "ORBmatcher.h"
+#include "ORB/extractor.h"
+#include "ORB/matcher.h"
 
 #include "CameraModels/KannalaBrandt8.h"
 #include "CameraModels/Pinhole.h"

@@ -30,7 +30,7 @@ using namespace std;
 #include "Frame.h"
 #include "KeyFrame.h"
 #include "Map.h"
-#include "ORBVocabulary.h"
+#include "ORB/vocabulary.h"
 
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/list.hpp>

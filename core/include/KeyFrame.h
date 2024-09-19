@@ -26,8 +26,8 @@
 #include "ImuTypes.h"
 #include "KeyFrameDatabase.h"
 #include "MapPoint.h"
-#include "ORBVocabulary.h"
-#include "ORBextractor.h"
+#include "ORB/vocabulary.h"
+#include "ORB/extractor.h"
 #include <DBoW2/BowVector.h>
 #include <DBoW2/FeatureVector.h>
 

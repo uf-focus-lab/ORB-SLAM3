@@ -24,7 +24,7 @@
 #include "Atlas.h"
 #include "KeyFrame.h"
 #include "LocalMapping.h"
-#include "ORBVocabulary.h"
+#include "ORB/vocabulary.h"
 #include "Tracking.h"
 
 #include "KeyFrameDatabase.h"

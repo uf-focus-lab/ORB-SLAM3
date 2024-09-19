@@ -29,7 +29,7 @@
 #include <sophus/geometry.hpp>
 
 #include "ImuTypes.h"
-#include "ORBVocabulary.h"
+#include "ORB/vocabulary.h"
 
 #include "Converter.h"
 #include "Settings.h"

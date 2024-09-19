@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 project(ORB_SLAM3)
 
 # Set the build type. Options are:
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../scripts)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../scripts)
 include(compiler)
+include(utilities)
 
 # FindOpenGL prefers GLVND by default when available.
 # Run "cmake --help-policy CMP0072" for policy details.
@@ -22,6 +23,7 @@ find_package(Sophus REQUIRED PATHS ${CMAKE_INSTALL_PREFIX})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/lib
     ${Pangolin_INCLUDE_DIRS}
     ${DBoW2_INCLUDE_DIRS}
 )
@@ -55,9 +57,11 @@ link_libraries(
     g2o::g2o_hierarchical_library
 )
 
-FILE(GLOB SOURCES src/*.cc src/**/*.cc)
-FILE(GLOB HEADERS include/*.h include/**/*.h)
-add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+file(GLOB SOURCES src/*.cc src/**/*.cc)
+file(GLOB LIBSRCS lib/*.cc lib/**/*.cc)
+file(GLOB HEADERS include/*.h include/**/*.h)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES} ${LIBSRCS})
 
 # Generate configuration file
 configure_file(

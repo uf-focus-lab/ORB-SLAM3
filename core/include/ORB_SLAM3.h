@@ -35,7 +35,7 @@
 #include "LocalMapping.h"
 #include "LoopClosing.h"
 #include "MapDrawer.h"
-#include "ORBVocabulary.h"
+#include "ORB/vocabulary.h"
 #include "Settings.h"
 #include "Tracking.h"
 #include "Viewer.h"

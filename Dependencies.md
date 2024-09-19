@@ -3,6 +3,17 @@
 
 In this document we list all the pieces of code included  by ORB-SLAM3 and linked libraries which are not property of the authors of ORB-SLAM3.
 
+### External Libraries
+
+| Package Name (Debian/Ubuntu) | Purpose |
+|:----------------------------:|:--------|
+| `libssl-dev`                 | MD5 Checksum |
+| `libopencv-dev`              | Image Processing, FAST Feature Extraction |
+| `libepoxy-dev`               | TBD |
+| `libeigen3-dev`              | Linear Algebra Acceleration |
+| `libopengl-dev`              | Visualization (Pangolin) |
+| `libboost-system-dev`        | Utility Functions and Tools |
+| `libboost-serialization-dev` | Serialization and De-serialization |
 
 ### Code in **src** and **include** folders
 
@@ -21,7 +32,7 @@ The original code is BSD licensed.
 The code is from: http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel.
 The code is in the public domain.
 
-### Submodules under [`thirdparty`](./thirdparty/) directory.
+### Submodules under [`deps`](./deps/) directory.
 
 1. [**DBoW2**](https://github.com/dorian3d/DBoW2)
 
@@ -46,21 +57,3 @@ The code is in the public domain.
     `Pangolin` is a set of lightweight and portable utility libraries for prototyping 3D, numeric or video based programs and algorithms.
 
     This project is distributed under the MIT License.
-
-### External Library Dependencies
-
-1. **OpenCV**.
-
-    BSD license.
-
-1. **Eigen3**.
-
-    For versions greater than 3.1.1 is MPL2, earlier versions are LGPLv3.
-
-1. **ROS (Optional, only needed for Examples/ROS)**.
-
-    BSD license. In the manifest.xml the only declared package dependencies are roscpp, tf, sensor_msgs, image_transport, cv_bridge, which are all BSD licensed.
-
-1. **SuiteSparse**
-
-    _Optional_ Dependency of `g2o`.
