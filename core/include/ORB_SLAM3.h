@@ -39,21 +39,7 @@
 #include "Settings.h"
 #include "Tracking.h"
 #include "Viewer.h"
-
-#include <cstdio> // IWYU pragma: export
-
-#define STRINGIFY(x) STRINGIFY2(x)
-#define STRINGIFY2(x) #x
-
-#define DEBUG_MSG(...)                                                         \
-  {                                                                            \
-    printf(__FILE__ ":" STRINGIFY(__LINE__) " " __VA_ARGS__);                  \
-    fflush(stdout);                                                            \
-  }
-
-#define DEBUG_FN(FN)                                                           \
-  DEBUG_MSG(#FN "()\n");                                                       \
-  FN
+#include "Debug.h"
 
 namespace ORB_SLAM3 {
 
@@ -72,7 +58,7 @@ public:
   static eLevel th;
 
 public:
-  static void PrintMess(string str, eLevel lev) {
+  static void Log(string str, eLevel lev) {
     if (lev <= th)
       cout << str << endl;
   }

@@ -525,7 +525,7 @@ void System::Shutdown() {
 }*/
 
   if (!mStrSaveAtlasToFile.empty()) {
-    Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile,
+    Verbose::Log("Atlas saving to file " + mStrSaveAtlasToFile,
                        Verbose::VERBOSITY_NORMAL);
     SaveAtlas(FileType::BINARY_FILE);
   }
@@ -1618,7 +1618,7 @@ vector<Sophus::SE3f> System::GetAllKeyframePoses() {
 bool System::SaveMap(const string &filename) {
   mStrSaveAtlasToFile = filename;
   if (!mStrSaveAtlasToFile.empty()) {
-    Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile,
+    Verbose::Log("Atlas saving to file " + mStrSaveAtlasToFile,
                        Verbose::VERBOSITY_NORMAL);
     return SaveAtlas(FileType::BINARY_FILE);
   } else {

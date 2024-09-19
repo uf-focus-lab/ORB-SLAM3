@@ -1281,7 +1281,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
 
   chrono::steady_clock::time_point t5 = chrono::steady_clock::now();
 
-  Verbose::PrintMess("Global Bundle Adjustment finished\nUpdating map ...",
+  Verbose::Log("Global Bundle Adjustment finished\nUpdating map ...",
                      Verbose::VERBOSITY_NORMAL);
 
   // Get Map Mutex
@@ -1320,7 +1320,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
         if (pChild->isVelocitySet()) {
           pChild->mVwbGBA = Rcor * pChild->GetVelocity();
         } else {
-          Verbose::PrintMess("Child velocity empty!! ",
+          Verbose::Log("Child velocity empty!! ",
                              Verbose::VERBOSITY_NORMAL);
         }
 
@@ -1371,7 +1371,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
     }
   }
 
-  Verbose::PrintMess("Map updated!", Verbose::VERBOSITY_NORMAL);
+  Verbose::Log("Map updated!", Verbose::VERBOSITY_NORMAL);
 
   mnKFs = vpKF.size();
   mIdxInit++;

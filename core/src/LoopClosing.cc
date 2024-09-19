@@ -144,7 +144,7 @@ void LoopClosing::Run() {
                 mvpMergeMPs.clear();
                 mnMergeNumNotFound = 0;
                 mbMergeDetected = false;
-                Verbose::PrintMess("scale bad estimated. Abort merging",
+                Verbose::Log("scale bad estimated. Abort merging",
                                    Verbose::VERBOSITY_NORMAL);
                 continue;
               }
@@ -168,7 +168,7 @@ void LoopClosing::Run() {
 
             // mpTracker->SetStepByStep(true);
 
-            Verbose::PrintMess("*Merge detected", Verbose::VERBOSITY_QUIET);
+            Verbose::Log("*Merge detected", Verbose::VERBOSITY_QUIET);
 
 #ifdef REGISTER_TIMES
             chrono::steady_clock::time_point time_StartMerge =
@@ -195,7 +195,7 @@ void LoopClosing::Run() {
             vdMergeTotal_ms.push_back(timeMergeTotal);
 #endif
 
-            Verbose::PrintMess("Merge finished!", Verbose::VERBOSITY_QUIET);
+            Verbose::Log("Merge finished!", Verbose::VERBOSITY_QUIET);
           }
 
           vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);
@@ -229,7 +229,7 @@ void LoopClosing::Run() {
           vdPR_MatchedTime.push_back(mpLoopMatchedKF->mTimeStamp);
           vnPR_TypeRecogn.push_back(0);
 
-          Verbose::PrintMess("*Loop detected", Verbose::VERBOSITY_QUIET);
+          Verbose::Log("*Loop detected", Verbose::VERBOSITY_QUIET);
 
           mg2oLoopScw = mg2oLoopSlw; //*mvg2oSim3LoopTcw[nCurrentIndex];
           if (mpCurrentKF->GetMap()->IsInertial()) {
@@ -558,7 +558,7 @@ bool LoopClosing::DetectAndReffineSim3FromLastKF(
   int nProjMatchesRep = 100;
 
   if (nNumProjMatches >= nProjMatches) {
-    // Verbose::PrintMess("Sim3 reffine: There are " +
+    // Verbose::Log("Sim3 reffine: There are " +
     // to_string(nNumProjMatches) + " initial matches ",
     // Verbose::VERBOSITY_DEBUG);
     Sophus::SE3d mTwm = pMatchedKF->GetPoseInverse().cast<double>();
@@ -575,7 +575,7 @@ bool LoopClosing::DetectAndReffineSim3FromLastKF(
         Optimizer::OptimizeSim3(mpCurrentKF, pMatchedKF, vpMatchedMPs, gScm, 10,
                                 bFixedScale, mHessian7x7, true);
 
-    // Verbose::PrintMess("Sim3 reffine: There are " + to_string(numOptMatches)
+    // Verbose::Log("Sim3 reffine: There are " + to_string(numOptMatches)
     // + " matches after of the optimization ", Verbose::VERBOSITY_DEBUG);
 
     if (numOptMatches > nProjOptMatches) {
@@ -627,7 +627,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(
   vector<int> vnMatchesStage(numCandidates, 0);
 
   int index = 0;
-  // Verbose::PrintMess("BoW candidates: There are " +
+  // Verbose::Log("BoW candidates: There are " +
   // to_string(vpBowCand.size()) + " possible candidates ",
   // Verbose::VERBOSITY_DEBUG);
   for (KeyFrame *pKFi : vpBowCand) {
@@ -727,7 +727,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(
       Eigen::Matrix4f mTcm;
       while (!bConverge && !bNoMore) {
         mTcm = solver.iterate(20, bNoMore, vbInliers, nInliers, bConverge);
-        // Verbose::PrintMess("BoW guess: Solver achieve " + to_string(nInliers)
+        // Verbose::Log("BoW guess: Solver achieve " + to_string(nInliers)
         // + " geometrical inliers among " + to_string(nBoWInliers) + " BoW
         // matches", Verbose::VERBOSITY_DEBUG);
       }
@@ -735,7 +735,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(
       if (bConverge) {
         // cout << "Check BoW: SolverSim3 converged" << endl;
 
-        // Verbose::PrintMess("BoW guess: Convergende with " +
+        // Verbose::Log("BoW guess: Convergende with " +
         // to_string(nInliers) + " geometrical inliers among " +
         // to_string(nBoWInliers) + " BoW matches", Verbose::VERBOSITY_DEBUG);
         //  Match by reprojection
@@ -894,7 +894,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(
       }
       /*else
       {
-          Verbose::PrintMess("BoW candidate: it don't match with the current
+          Verbose::Log("BoW candidate: it don't match with the current
       one", Verbose::VERBOSITY_DEBUG);
       }*/
     }
@@ -1277,7 +1277,7 @@ void LoopClosing::MergeLocal() {
   // relaunch at the end of the merge
   bool bRelaunchBA = false;
 
-  // Verbose::PrintMess("MERGE-VISUAL: Check Full Bundle Adjustment",
+  // Verbose::Log("MERGE-VISUAL: Check Full Bundle Adjustment",
   // Verbose::VERBOSITY_DEBUG);
   //  If a Global Bundle Adjustment is running, abort it
   if (isRunningGBA()) {
@@ -1293,7 +1293,7 @@ void LoopClosing::MergeLocal() {
     bRelaunchBA = true;
   }
 
-  // Verbose::PrintMess("MERGE-VISUAL: Request Stop Local Mapping",
+  // Verbose::Log("MERGE-VISUAL: Request Stop Local Mapping",
   // Verbose::VERBOSITY_DEBUG); cout << "Request Stop Local Mapping" << endl;
   mpLocalMapper->RequestStop();
   // Wait until Local Mapping has effectively stopped
@@ -1461,12 +1461,12 @@ void LoopClosing::MergeLocal() {
 #endif
   for (KeyFrame *pKFi : spLocalWindowKFs) {
     if (!pKFi || pKFi->isBad()) {
-      Verbose::PrintMess("Bad KF in correction", Verbose::VERBOSITY_DEBUG);
+      Verbose::Log("Bad KF in correction", Verbose::VERBOSITY_DEBUG);
       continue;
     }
 
     if (pKFi->GetMap() != pCurrentMap)
-      Verbose::PrintMess("Other map KF, this should't happen",
+      Verbose::Log("Other map KF, this should't happen",
                          Verbose::VERBOSITY_DEBUG);
 
     g2o::Sim3 g2oCorrectedSiw;
@@ -2311,7 +2311,7 @@ void LoopClosing::ResetIfRequested() {
 
 void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
                                             unsigned long nLoopKF) {
-  Verbose::PrintMess("Starting Global Bundle Adjustment",
+  Verbose::Log("Starting Global Bundle Adjustment",
                      Verbose::VERBOSITY_NORMAL);
 
 #ifdef REGISTER_TIMES
@@ -2361,9 +2361,9 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
       return;
 
     if (!mbStopGBA) {
-      Verbose::PrintMess("Global Bundle Adjustment finished",
+      Verbose::Log("Global Bundle Adjustment finished",
                          Verbose::VERBOSITY_NORMAL);
-      Verbose::PrintMess("Updating map ...", Verbose::VERBOSITY_NORMAL);
+      Verbose::Log("Updating map ...", Verbose::VERBOSITY_NORMAL);
 
       mpLocalMapper->RequestStop();
       // Wait until Local Mapping has effectively stopped
@@ -2410,7 +2410,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
             if (pChild->isVelocitySet()) {
               pChild->mVwbGBA = Rcor * pChild->GetVelocity();
             } else
-              Verbose::PrintMess("Child velocity empty!! ",
+              Verbose::Log("Child velocity empty!! ",
                                  Verbose::VERBOSITY_NORMAL);
 
             // cout << "Child bias: " << pChild->GetImuBias() << endl;
@@ -2487,7 +2487,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
           // cout << "-------Update inertial values" << endl;
           pKF->mVwbBefGBA = pKF->GetVelocity();
           // if (pKF->mVwbGBA.empty())
-          //     Verbose::PrintMess("pKF->mVwbGBA is empty",
+          //     Verbose::Log("pKF->mVwbGBA is empty",
           //     Verbose::VERBOSITY_NORMAL);
 
           // assert(!pKF->mVwbGBA.empty());
@@ -2556,7 +2556,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map *pActiveMap,
                             .count();
       vdFGBATotal_ms.push_back(timeFGBA);
 #endif
-      Verbose::PrintMess("Map updated!", Verbose::VERBOSITY_NORMAL);
+      Verbose::Log("Map updated!", Verbose::VERBOSITY_NORMAL);
     }
 
     mbFinishedGBA = true;
