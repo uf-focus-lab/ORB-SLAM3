@@ -966,7 +966,7 @@ int Optimizer::PoseOptimization(Frame *pFrame) {
                                    Tcw.translation().cast<double>()));
 
     optimizer.initializeOptimization(0);
-    DEBUG_FN(optimizer.optimize)(its[it]);
+    optimizer.optimize(its[it]);
 
     nBad = 0;
     for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++) {
