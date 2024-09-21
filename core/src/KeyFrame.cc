@@ -631,7 +631,7 @@ void KeyFrame::SetBadFlag() {
 }
 
 bool KeyFrame::isBad() {
-  // unique_lock<mutex> lock(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mbBad;
 }
 
