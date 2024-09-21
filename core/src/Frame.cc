@@ -23,9 +23,9 @@
 
 #include <thread>
 
+#include "CameraModels/GeometricCamera.h"
 #include "Converter.h"
 #include "G2oTypes.h"
-#include "CameraModels/GeometricCamera.h"
 #include "KeyFrame.h"
 #include "MapPoint.h"
 #include "ORB/extractor.h"
@@ -628,7 +628,7 @@ bool Frame::ProjectPointDistort(MapPoint *pMP, cv::Point2f &kp, float &u,
 
   // Check positive depth
   if (PcZ < 0.0f) {
-    cout << "Negative depth: " << PcZ << endl;
+    cerr << "Negative depth: " << PcZ << endl;
     return false;
   }
 

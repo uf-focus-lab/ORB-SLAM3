@@ -22,6 +22,7 @@
 using namespace std;
 
 #include "Viewer.h"
+#include "ORB_SLAM3.h"
 #include <pangolin/pangolin.h>
 
 #include <mutex>
@@ -205,15 +206,13 @@ void Viewer::Run() {
   bool bStepByStep = false;
   bool bCameraView = true;
 
-  if (mpTracker->mSensor == mpSystem->MONOCULAR ||
-      mpTracker->mSensor == mpSystem->STEREO ||
-      mpTracker->mSensor == mpSystem->RGBD) {
+  if (!(mpTracker->sensor_type & SensorType::USE_IMU)) {
     menuShowGraph = true;
   }
 
   float trackedImageScale = mpTracker->GetImageScale();
 
-  cout << "Starting the Viewer" << endl;
+  cerr << "Starting the Viewer" << endl;
   while (1) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -277,7 +276,7 @@ void Viewer::Run() {
     }
 
     if (menuStepByStep && !bStepByStep) {
-      // cout << "Viewer: step by step" << endl;
+      // cerr << "Viewer: step by step" << endl;
       mpTracker->SetStepByStep(true);
       bStepByStep = true;
     } else if (!menuStepByStep && bStepByStep) {

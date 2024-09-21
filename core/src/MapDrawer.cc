@@ -195,7 +195,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph,
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_LINES);
       } else {
-        // cout << "Child KF: " << vpKFs[i]->mnId << endl;
+        // cerr << "Child KF: " << vpKFs[i]->mnId << endl;
         glLineWidth(mKeyFrameLineWidth);
         if (bDrawOptLba) {
           if (sOptKFs.find(pKF->mnId) != sOptKFs.end()) {
@@ -244,7 +244,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph,
     glColor4f(0.0f, 1.0f, 0.0f, 0.6f);
     glBegin(GL_LINES);
 
-    // cout << "-----------------Draw graph-----------------" << endl;
+    // cerr << "-----------------Draw graph-----------------" << endl;
     for (size_t i = 0; i < vpKFs.size(); i++) {
       // Covisibility Graph
       const vector<KeyFrame *> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);

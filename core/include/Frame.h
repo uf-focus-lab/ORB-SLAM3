@@ -384,7 +384,7 @@ public:
           right++;
       }
     }
-    cout << "Point distribution in Frame: left-> " << left << " --- right-> "
+    cerr << "Point distribution in Frame: left-> " << left << " --- right-> "
          << right << endl;
   }
 

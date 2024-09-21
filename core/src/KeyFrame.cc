@@ -23,6 +23,7 @@
 #include "Converter.h"
 #include "ImuTypes.h"
 #include <mutex>
+#include <thread>
 
 using namespace std;
 
@@ -404,12 +405,12 @@ void KeyFrame::UpdateConnections(bool upParent) {
   vector<pair<int, KeyFrame *>> vPairs;
   vPairs.reserve(KFcounter.size());
   if (!upParent)
-    cout << "UPDATE_CONN: current KF " << mnId << endl;
+    cerr << "UPDATE_CONN: current KF " << mnId << endl;
   for (map<KeyFrame *, int>::iterator mit = KFcounter.begin(),
                                       mend = KFcounter.end();
        mit != mend; mit++) {
     if (!upParent)
-      cout << "  UPDATE_CONN: KF " << mit->first->mnId
+      cerr << "  UPDATE_CONN: KF " << mit->first->mnId
            << " ; num matches: " << mit->second << endl;
     if (mit->second > nmax) {
       nmax = mit->second;
@@ -435,7 +436,7 @@ void KeyFrame::UpdateConnections(bool upParent) {
   }
 
   {
-    unique_lock<mutex> lockCon(mMutexConnections);
+    unique_lock<mutex> lock(mMutexConnections);
 
     mConnectedKeyFrameWeights = KFcounter;
     mvpOrderedConnectedKeyFrames = vector<KeyFrame *>(lKFs.begin(), lKFs.end());
@@ -450,19 +451,19 @@ void KeyFrame::UpdateConnections(bool upParent) {
 }
 
 void KeyFrame::AddChild(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   mspChildrens.insert(pKF);
 }
 
 void KeyFrame::EraseChild(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   mspChildrens.erase(pKF);
 }
 
 void KeyFrame::ChangeParent(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   if (pKF == this) {
-    cout << "ERROR: Change parent KF, the parent and child are the same KF"
+    cerr << "ERROR: Change parent KF, the parent and child are the same KF"
          << endl;
     throw invalid_argument("The parent and child can not be the same");
   }
@@ -472,44 +473,44 @@ void KeyFrame::ChangeParent(KeyFrame *pKF) {
 }
 
 set<KeyFrame *> KeyFrame::GetChilds() {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mspChildrens;
 }
 
 KeyFrame *KeyFrame::GetParent() {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mpParent;
 }
 
 bool KeyFrame::hasChild(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mspChildrens.count(pKF);
 }
 
 void KeyFrame::SetFirstConnection(bool bFirst) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   mbFirstConnection = bFirst;
 }
 
 void KeyFrame::AddLoopEdge(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   mbNotErase = true;
   mspLoopEdges.insert(pKF);
 }
 
 set<KeyFrame *> KeyFrame::GetLoopEdges() {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mspLoopEdges;
 }
 
 void KeyFrame::AddMergeEdge(KeyFrame *pKF) {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   mbNotErase = true;
   mspMergeEdges.insert(pKF);
 }
 
 set<KeyFrame *> KeyFrame::GetMergeEdges() {
-  unique_lock<mutex> lockCon(mMutexConnections);
+  unique_lock<mutex> lock(mMutexConnections);
   return mspMergeEdges;
 }
 
@@ -582,7 +583,6 @@ void KeyFrame::SetBadFlag() {
         KeyFrame *pKF = *sit;
         if (pKF->isBad())
           continue;
-
         // Check if a parent candidate is connected to the keyframe
         vector<KeyFrame *> vpConnected = pKF->GetVectorCovisibleKeyFrames();
         for (size_t i = 0, iend = vpConnected.size(); i < iend; i++) {
@@ -631,7 +631,7 @@ void KeyFrame::SetBadFlag() {
 }
 
 bool KeyFrame::isBad() {
-  unique_lock<mutex> lock(mMutexConnections);
+  // unique_lock<mutex> lock(mMutexConnections);
   return mbBad;
 }
 
@@ -927,7 +927,7 @@ void KeyFrame::PostLoad(map<long unsigned int, KeyFrame *> &mpKFid,
   if (mnBackupIdCamera >= 0) {
     mpCamera = mpCamId[mnBackupIdCamera];
   } else {
-    cout << "ERROR: There is not a main camera in KF " << mnId << endl;
+    cerr << "ERROR: There is not a main camera in KF " << mnId << endl;
   }
   if (mnBackupIdCamera2 >= 0) {
     mpCamera2 = mpCamId[mnBackupIdCamera2];
@@ -965,7 +965,7 @@ bool KeyFrame::ProjectPointDistort(MapPoint *pMP, cv::Point2f &kp, float &u,
 
   // Check positive depth
   if (PcZ < 0.0f) {
-    cout << "Negative depth: " << PcZ << endl;
+    cerr << "Negative depth: " << PcZ << endl;
     return false;
   }
 
@@ -974,7 +974,7 @@ bool KeyFrame::ProjectPointDistort(MapPoint *pMP, cv::Point2f &kp, float &u,
   u = fx * PcX * invz + cx;
   v = fy * PcY * invz + cy;
 
-  // cout << "c";
+  // cerr << "c";
 
   if (u < mnMinX || u > mnMaxX)
     return false;
@@ -1026,7 +1026,7 @@ bool KeyFrame::ProjectPointUnDistort(MapPoint *pMP, cv::Point2f &kp, float &u,
 
   // Check positive depth
   if (PcZ < 0.0f) {
-    cout << "Negative depth: " << PcZ << endl;
+    cerr << "Negative depth: " << PcZ << endl;
     return false;
   }
 

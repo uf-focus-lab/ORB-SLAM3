@@ -79,6 +79,7 @@ public:
   void CreateNewMap();
   void ChangeMap(Map *pMap);
 
+  // Get last initialization keyframe id
   unsigned long int GetLastInitKFid();
 
   void SetViewer(Viewer *pViewer);

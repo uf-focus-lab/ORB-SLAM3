@@ -28,6 +28,8 @@ using namespace std;
 #include "ORB/matcher.h"
 #include "Optimizer.h"
 
+#include "Debug.h"
+
 #include <chrono>
 #include <mutex>
 
@@ -149,7 +151,7 @@ void LocalMapping::Run() {
                         mpCurrentKeyFrame->mPrevKF->mTimeStamp;
             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2()) {
               if ((mTinit < 10.f) && (dist < 0.02)) {
-                cout << "Not enough motion for initializing. Reseting..."
+                cerr << "Not enough motion for initializing. Reseting..."
                      << endl;
                 unique_lock<mutex> lock(mMutexReset);
                 mbResetRequestedActiveMap = true;
@@ -224,25 +226,25 @@ void LocalMapping::Run() {
           {
             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA1()) {
               if (mTinit > 5.0f) {
-                cout << "start VIBA 1" << endl;
+                cerr << "start VIBA 1" << endl;
                 mpCurrentKeyFrame->GetMap()->SetIniertialBA1();
                 if (mbMonocular)
                   InitializeIMU(1.f, 1e5, true);
                 else
                   InitializeIMU(1.f, 1e5, true);
 
-                cout << "end VIBA 1" << endl;
+                cerr << "end VIBA 1" << endl;
               }
             } else if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2()) {
               if (mTinit > 15.0f) {
-                cout << "start VIBA 2" << endl;
+                cerr << "start VIBA 2" << endl;
                 mpCurrentKeyFrame->GetMap()->SetIniertialBA2();
                 if (mbMonocular)
                   InitializeIMU(0.f, 0.f, true);
                 else
                   InitializeIMU(0.f, 0.f, true);
 
-                cout << "end VIBA 2" << endl;
+                cerr << "end VIBA 2" << endl;
               }
             }
 
@@ -836,7 +838,7 @@ bool LocalMapping::Stop() {
   unique_lock<mutex> lock(mMutexStop);
   if (mbStopRequested && !mbNotStop) {
     mbStopped = true;
-    cout << "Local Mapping STOP" << endl;
+    cerr << "Local Mapping STOP" << endl;
     return true;
   }
 
@@ -866,7 +868,7 @@ void LocalMapping::Release() {
     delete *lit;
   mlNewKeyFrames.clear();
 
-  cout << "Local Mapping RELEASE" << endl;
+  cerr << "Local Mapping RELEASE" << endl;
 }
 
 bool LocalMapping::AcceptKeyFrames() {
@@ -1041,10 +1043,10 @@ void LocalMapping::KeyFrameCulling() {
 void LocalMapping::RequestReset() {
   {
     unique_lock<mutex> lock(mMutexReset);
-    cout << "LM: Map reset recieved" << endl;
+    cerr << "LM: Map reset recieved" << endl;
     mbResetRequested = true;
   }
-  cout << "LM: Map reset, waiting..." << endl;
+  cerr << "LM: Map reset, waiting..." << endl;
 
   while (1) {
     {
@@ -1054,17 +1056,17 @@ void LocalMapping::RequestReset() {
     }
     usleep(3000);
   }
-  cout << "LM: Map reset, Done!!!" << endl;
+  cerr << "LM: Map reset, Done!!!" << endl;
 }
 
 void LocalMapping::RequestResetActiveMap(Map *pMap) {
   {
     unique_lock<mutex> lock(mMutexReset);
-    cout << "LM: Active map reset recieved" << endl;
+    cerr << "LM: Active map reset recieved" << endl;
     mbResetRequestedActiveMap = true;
     mpMapToReset = pMap;
   }
-  cout << "LM: Active map reset, waiting..." << endl;
+  cerr << "LM: Active map reset, waiting..." << endl;
 
   while (1) {
     {
@@ -1074,7 +1076,7 @@ void LocalMapping::RequestResetActiveMap(Map *pMap) {
     }
     usleep(3000);
   }
-  cout << "LM: Active map reset, Done!!!" << endl;
+  cerr << "LM: Active map reset, Done!!!" << endl;
 }
 
 void LocalMapping::ResetIfRequested() {
@@ -1084,7 +1086,7 @@ void LocalMapping::ResetIfRequested() {
     if (mbResetRequested) {
       executed_reset = true;
 
-      cout << "LM: Reseting Atlas in Local Mapping..." << endl;
+      cerr << "LM: Reseting Atlas in Local Mapping..." << endl;
       mlNewKeyFrames.clear();
       mlpRecentAddedMapPoints.clear();
       mbResetRequested = false;
@@ -1098,12 +1100,12 @@ void LocalMapping::ResetIfRequested() {
 
       mIdxInit = 0;
 
-      cout << "LM: End reseting Local Mapping..." << endl;
+      cerr << "LM: End reseting Local Mapping..." << endl;
     }
 
     if (mbResetRequestedActiveMap) {
       executed_reset = true;
-      cout << "LM: Reseting current map in Local Mapping..." << endl;
+      cerr << "LM: Reseting current map in Local Mapping..." << endl;
       mlNewKeyFrames.clear();
       mlpRecentAddedMapPoints.clear();
 
@@ -1115,11 +1117,11 @@ void LocalMapping::ResetIfRequested() {
 
       mbResetRequested = false;
       mbResetRequestedActiveMap = false;
-      cout << "LM: End reseting Local Mapping..." << endl;
+      cerr << "LM: End reseting Local Mapping..." << endl;
     }
   }
   if (executed_reset)
-    cout << "LM: Reset free the mutex" << endl;
+    cerr << "LM: Reset free the mutex" << endl;
 }
 
 void LocalMapping::RequestFinish() {
@@ -1217,6 +1219,10 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
     const float cosg = gI.dot(dirG);
     const float ang = acos(cosg);
     Eigen::Vector3f vzg = v * ang / nv;
+    if (vzg.hasNaN()) {
+      DEBUG_MSG("NaN detected");
+      return;
+    }
     Rwg = Sophus::SO3f::exp(vzg).matrix();
     mRwg = Rwg.cast<double>();
     mTinit = mpCurrentKeyFrame->mTimeStamp - mFirstTs;
@@ -1238,7 +1244,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
   chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
 
   if (mScale < 1e-1) {
-    cout << "scale too small" << endl;
+    cerr << "scale too small" << endl;
     bInitializing = false;
     return;
   }
@@ -1282,7 +1288,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
   chrono::steady_clock::time_point t5 = chrono::steady_clock::now();
 
   Verbose::Log("Global Bundle Adjustment finished\nUpdating map ...",
-                     Verbose::VERBOSITY_NORMAL);
+               Verbose::VERBOSITY_NORMAL);
 
   // Get Map Mutex
   unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
@@ -1320,8 +1326,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
         if (pChild->isVelocitySet()) {
           pChild->mVwbGBA = Rcor * pChild->GetVelocity();
         } else {
-          Verbose::Log("Child velocity empty!! ",
-                             Verbose::VERBOSITY_NORMAL);
+          Verbose::Log("Child velocity empty!! ", Verbose::VERBOSITY_NORMAL);
         }
 
         pChild->mBiasGBA = pChild->GetImuBias();
@@ -1338,7 +1343,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA) {
       pKF->SetVelocity(pKF->mVwbGBA);
       pKF->SetNewBias(pKF->mBiasGBA);
     } else {
-      cout << "KF " << pKF->mnId << " not set to inertial!! \n";
+      cerr << "KF " << pKF->mnId << " not set to inertial!! \n";
     }
 
     lpKFtoCheck.pop_front();
@@ -1427,7 +1432,7 @@ void LocalMapping::ScaleRefinement() {
 
   if (mScale < 1e-1) // 1e-1
   {
-    cout << "scale too small" << endl;
+    cerr << "scale too small" << endl;
     bInitializing = false;
     return;
   }

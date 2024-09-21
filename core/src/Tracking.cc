@@ -21,6 +21,8 @@
 
 #include "Tracking.h"
 
+#include "Debug.h"
+
 #include "CameraModels/KannalaBrandt8.h"
 #include "CameraModels/Pinhole.h"
 #include "Converter.h"
@@ -28,10 +30,11 @@
 #include "G2oTypes.h"
 #include "GeometricTools.h"
 #include "MLPnPsolver.h"
-#include "ORB_SLAM3.h"
 #include "ORB/extractor.h"
 #include "ORB/matcher.h"
+#include "ORB_SLAM3.h"
 #include "Optimizer.h"
+#include "System.h"
 
 #include <iostream>
 
@@ -45,9 +48,10 @@ namespace ORB_SLAM3 {
 Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
                    MapDrawer *pMapDrawer, Atlas *pAtlas,
                    KeyFrameDatabase *pKFDB, const string &strSettingPath,
-                   const int sensor, Settings *settings, const string &_nameSeq)
-    : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
-      mbOnlyTracking(false), mbMapUpdated(false), mbVO(false),
+                   const SensorType sensor_type, Settings *settings,
+                   const string &_nameSeq)
+    : mState(NO_IMAGES_YET), sensor_type(sensor_type), mTrackedFr(0),
+      mbStep(false), mbOnlyTracking(false), mbMapUpdated(false), mbVO(false),
       mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB), mbReadyToInitialize(false),
       mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
       mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas),
@@ -62,32 +66,27 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
 
     bool b_parse_cam = ParseCamParamFile(fSettings);
     if (!b_parse_cam) {
-      cout << "*Error with the camera parameters in the config file*" << endl;
+      cerr << "*Error with the camera parameters in the config file*" << endl;
     }
 
     // Load ORB parameters
     bool b_parse_orb = ParseORBParamFile(fSettings);
     if (!b_parse_orb) {
-      cout << "*Error with the ORB parameters in the config file*" << endl;
+      cerr << "*Error with the ORB parameters in the config file*" << endl;
     }
 
     bool b_parse_imu = true;
-    if (sensor == System::IMU_MONOCULAR || sensor == System::IMU_STEREO ||
-        sensor == System::IMU_RGBD) {
+    if (sensor_type & SensorType::USE_IMU) {
       b_parse_imu = ParseIMUParamFile(fSettings);
       if (!b_parse_imu) {
-        cout << "*Error with the IMU parameters in the config file*" << endl;
+        cerr << "*Error with the IMU parameters in the config file*" << endl;
       }
 
       mnFramesToResetIMU = mMaxFrames;
     }
 
     if (!b_parse_cam || !b_parse_orb || !b_parse_imu) {
-      cerr << "**ERROR in the config file, the format is not correct**" << endl;
-      try {
-        throw -1;
-      } catch (exception &e) {
-      }
+      throw std::runtime_error("Error parsing config file, format not correct");
     }
   }
 
@@ -97,15 +96,15 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
   mnNumDataset = 0;
 
   vector<GeometricCamera *> vpCams = mpAtlas->GetAllCameras();
-  cout << "There are " << vpCams.size() << " cameras in the atlas" << endl;
+  cerr << "There are " << vpCams.size() << " cameras in the atlas" << endl;
   for (GeometricCamera *pCam : vpCams) {
-    cout << "Camera " << pCam->GetId();
+    cerr << "Camera " << pCam->GetId();
     if (pCam->GetType() == GeometricCamera::CAM_PINHOLE) {
-      cout << " is pinhole" << endl;
+      cerr << " is pinhole" << endl;
     } else if (pCam->GetType() == GeometricCamera::CAM_FISHEYE) {
-      cout << " is fisheye" << endl;
+      cerr << " is fisheye" << endl;
     } else {
-      cout << " is unknown" << endl;
+      cerr << " is unknown" << endl;
     }
   }
 
@@ -253,19 +252,19 @@ void Tracking::PrintTimeStats() {
   f.open("ExecMean.txt");
   f << fixed;
   // Report the mean and std of each one
-  cout << endl << " TIME STATS in ms (mean$\\pm$std)" << endl;
+  cerr << endl << " TIME STATS in ms (mean$\\pm$std)" << endl;
   f << " TIME STATS in ms (mean$\\pm$std)" << endl;
-  cout << "OpenCV version: " << CV_VERSION << endl;
+  cerr << "OpenCV version: " << CV_VERSION << endl;
   f << "OpenCV version: " << CV_VERSION << endl;
-  cout << "---------------------------" << endl;
-  cout << "Tracking" << setprecision(5) << endl << endl;
+  cerr << "---------------------------" << endl;
+  cerr << "Tracking" << setprecision(5) << endl << endl;
   f << "---------------------------" << endl;
   f << "Tracking" << setprecision(5) << endl << endl;
   double average, deviation;
   if (!vdRectStereo_ms.empty()) {
     average = calcAverage(vdRectStereo_ms);
     deviation = calcDeviation(vdRectStereo_ms, average);
-    cout << "Stereo Rectification: " << average << "$\\pm$" << deviation
+    cerr << "Stereo Rectification: " << average << "$\\pm$" << deviation
          << endl;
     f << "Stereo Rectification: " << average << "$\\pm$" << deviation << endl;
   }
@@ -273,120 +272,120 @@ void Tracking::PrintTimeStats() {
   if (!vdResizeImage_ms.empty()) {
     average = calcAverage(vdResizeImage_ms);
     deviation = calcDeviation(vdResizeImage_ms, average);
-    cout << "Image Resize: " << average << "$\\pm$" << deviation << endl;
+    cerr << "Image Resize: " << average << "$\\pm$" << deviation << endl;
     f << "Image Resize: " << average << "$\\pm$" << deviation << endl;
   }
 
   average = calcAverage(vdORBExtract_ms);
   deviation = calcDeviation(vdORBExtract_ms, average);
-  cout << "ORB Extraction: " << average << "$\\pm$" << deviation << endl;
+  cerr << "ORB Extraction: " << average << "$\\pm$" << deviation << endl;
   f << "ORB Extraction: " << average << "$\\pm$" << deviation << endl;
 
   if (!vdStereoMatch_ms.empty()) {
     average = calcAverage(vdStereoMatch_ms);
     deviation = calcDeviation(vdStereoMatch_ms, average);
-    cout << "Stereo Matching: " << average << "$\\pm$" << deviation << endl;
+    cerr << "Stereo Matching: " << average << "$\\pm$" << deviation << endl;
     f << "Stereo Matching: " << average << "$\\pm$" << deviation << endl;
   }
 
   if (!vdIMUInteg_ms.empty()) {
     average = calcAverage(vdIMUInteg_ms);
     deviation = calcDeviation(vdIMUInteg_ms, average);
-    cout << "IMU Preintegration: " << average << "$\\pm$" << deviation << endl;
+    cerr << "IMU Preintegration: " << average << "$\\pm$" << deviation << endl;
     f << "IMU Preintegration: " << average << "$\\pm$" << deviation << endl;
   }
 
   average = calcAverage(vdPosePred_ms);
   deviation = calcDeviation(vdPosePred_ms, average);
-  cout << "Pose Prediction: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Pose Prediction: " << average << "$\\pm$" << deviation << endl;
   f << "Pose Prediction: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(vdLMTrack_ms);
   deviation = calcDeviation(vdLMTrack_ms, average);
-  cout << "LM Track: " << average << "$\\pm$" << deviation << endl;
+  cerr << "LM Track: " << average << "$\\pm$" << deviation << endl;
   f << "LM Track: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(vdNewKF_ms);
   deviation = calcDeviation(vdNewKF_ms, average);
-  cout << "New KF decision: " << average << "$\\pm$" << deviation << endl;
+  cerr << "New KF decision: " << average << "$\\pm$" << deviation << endl;
   f << "New KF decision: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(vdTrackTotal_ms);
   deviation = calcDeviation(vdTrackTotal_ms, average);
-  cout << "Total Tracking: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Total Tracking: " << average << "$\\pm$" << deviation << endl;
   f << "Total Tracking: " << average << "$\\pm$" << deviation << endl;
 
   // Local Mapping time stats
-  cout << endl << endl << endl;
-  cout << "Local Mapping" << endl << endl;
+  cerr << endl << endl << endl;
+  cerr << "Local Mapping" << endl << endl;
   f << endl << "Local Mapping" << endl << endl;
 
   average = calcAverage(mpLocalMapper->vdKFInsert_ms);
   deviation = calcDeviation(mpLocalMapper->vdKFInsert_ms, average);
-  cout << "KF Insertion: " << average << "$\\pm$" << deviation << endl;
+  cerr << "KF Insertion: " << average << "$\\pm$" << deviation << endl;
   f << "KF Insertion: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vdMPCulling_ms);
   deviation = calcDeviation(mpLocalMapper->vdMPCulling_ms, average);
-  cout << "MP Culling: " << average << "$\\pm$" << deviation << endl;
+  cerr << "MP Culling: " << average << "$\\pm$" << deviation << endl;
   f << "MP Culling: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vdMPCreation_ms);
   deviation = calcDeviation(mpLocalMapper->vdMPCreation_ms, average);
-  cout << "MP Creation: " << average << "$\\pm$" << deviation << endl;
+  cerr << "MP Creation: " << average << "$\\pm$" << deviation << endl;
   f << "MP Creation: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vdLBA_ms);
   deviation = calcDeviation(mpLocalMapper->vdLBA_ms, average);
-  cout << "LBA: " << average << "$\\pm$" << deviation << endl;
+  cerr << "LBA: " << average << "$\\pm$" << deviation << endl;
   f << "LBA: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vdKFCulling_ms);
   deviation = calcDeviation(mpLocalMapper->vdKFCulling_ms, average);
-  cout << "KF Culling: " << average << "$\\pm$" << deviation << endl;
+  cerr << "KF Culling: " << average << "$\\pm$" << deviation << endl;
   f << "KF Culling: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vdLMTotal_ms);
   deviation = calcDeviation(mpLocalMapper->vdLMTotal_ms, average);
-  cout << "Total Local Mapping: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Total Local Mapping: " << average << "$\\pm$" << deviation << endl;
   f << "Total Local Mapping: " << average << "$\\pm$" << deviation << endl;
 
   // Local Mapping LBA complexity
-  cout << "---------------------------" << endl;
-  cout << endl << "LBA complexity (mean$\\pm$std)" << endl;
+  cerr << "---------------------------" << endl;
+  cerr << endl << "LBA complexity (mean$\\pm$std)" << endl;
   f << "---------------------------" << endl;
   f << endl << "LBA complexity (mean$\\pm$std)" << endl;
 
   average = calcAverage(mpLocalMapper->vnLBA_edges);
   deviation = calcDeviation(mpLocalMapper->vnLBA_edges, average);
-  cout << "LBA Edges: " << average << "$\\pm$" << deviation << endl;
+  cerr << "LBA Edges: " << average << "$\\pm$" << deviation << endl;
   f << "LBA Edges: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vnLBA_KFopt);
   deviation = calcDeviation(mpLocalMapper->vnLBA_KFopt, average);
-  cout << "LBA KF optimized: " << average << "$\\pm$" << deviation << endl;
+  cerr << "LBA KF optimized: " << average << "$\\pm$" << deviation << endl;
   f << "LBA KF optimized: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vnLBA_KFfixed);
   deviation = calcDeviation(mpLocalMapper->vnLBA_KFfixed, average);
-  cout << "LBA KF fixed: " << average << "$\\pm$" << deviation << endl;
+  cerr << "LBA KF fixed: " << average << "$\\pm$" << deviation << endl;
   f << "LBA KF fixed: " << average << "$\\pm$" << deviation << endl;
 
   average = calcAverage(mpLocalMapper->vnLBA_MPs);
   deviation = calcDeviation(mpLocalMapper->vnLBA_MPs, average);
-  cout << "LBA MP: " << average << "$\\pm$" << deviation << endl << endl;
+  cerr << "LBA MP: " << average << "$\\pm$" << deviation << endl << endl;
   f << "LBA MP: " << average << "$\\pm$" << deviation << endl << endl;
 
-  cout << "LBA executions: " << mpLocalMapper->nLBA_exec << endl;
-  cout << "LBA aborts: " << mpLocalMapper->nLBA_abort << endl;
+  cerr << "LBA executions: " << mpLocalMapper->nLBA_exec << endl;
+  cerr << "LBA aborts: " << mpLocalMapper->nLBA_abort << endl;
   f << "LBA executions: " << mpLocalMapper->nLBA_exec << endl;
   f << "LBA aborts: " << mpLocalMapper->nLBA_abort << endl;
 
   // Map complexity
-  cout << "---------------------------" << endl;
-  cout << endl << "Map complexity" << endl;
-  cout << "KFs in map: " << mpAtlas->GetAllKeyFrames().size() << endl;
-  cout << "MPs in map: " << mpAtlas->GetAllMapPoints().size() << endl;
+  cerr << "---------------------------" << endl;
+  cerr << endl << "Map complexity" << endl;
+  cerr << "KFs in map: " << mpAtlas->GetAllKeyFrames().size() << endl;
+  cerr << "MPs in map: " << mpAtlas->GetAllMapPoints().size() << endl;
   f << "---------------------------" << endl;
   f << endl << "Map complexity" << endl;
   vector<Map *> vpMaps = mpAtlas->GetAllMaps();
@@ -403,108 +402,108 @@ void Tracking::PrintTimeStats() {
 
   f << "---------------------------" << endl;
   f << endl << "Place Recognition (mean$\\pm$std)" << endl;
-  cout << "---------------------------" << endl;
-  cout << endl << "Place Recognition (mean$\\pm$std)" << endl;
+  cerr << "---------------------------" << endl;
+  cerr << endl << "Place Recognition (mean$\\pm$std)" << endl;
   average = calcAverage(mpLoopClosing->vdDataQuery_ms);
   deviation = calcDeviation(mpLoopClosing->vdDataQuery_ms, average);
   f << "Database Query: " << average << "$\\pm$" << deviation << endl;
-  cout << "Database Query: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Database Query: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdEstSim3_ms);
   deviation = calcDeviation(mpLoopClosing->vdEstSim3_ms, average);
   f << "SE3 estimation: " << average << "$\\pm$" << deviation << endl;
-  cout << "SE3 estimation: " << average << "$\\pm$" << deviation << endl;
+  cerr << "SE3 estimation: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdPRTotal_ms);
   deviation = calcDeviation(mpLoopClosing->vdPRTotal_ms, average);
   f << "Total Place Recognition: " << average << "$\\pm$" << deviation << endl
     << endl;
-  cout << "Total Place Recognition: " << average << "$\\pm$" << deviation
+  cerr << "Total Place Recognition: " << average << "$\\pm$" << deviation
        << endl
        << endl;
 
   f << endl << "Loop Closing (mean$\\pm$std)" << endl;
-  cout << endl << "Loop Closing (mean$\\pm$std)" << endl;
+  cerr << endl << "Loop Closing (mean$\\pm$std)" << endl;
   average = calcAverage(mpLoopClosing->vdLoopFusion_ms);
   deviation = calcDeviation(mpLoopClosing->vdLoopFusion_ms, average);
   f << "Loop Fusion: " << average << "$\\pm$" << deviation << endl;
-  cout << "Loop Fusion: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Loop Fusion: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdLoopOptEss_ms);
   deviation = calcDeviation(mpLoopClosing->vdLoopOptEss_ms, average);
   f << "Essential Graph: " << average << "$\\pm$" << deviation << endl;
-  cout << "Essential Graph: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Essential Graph: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdLoopTotal_ms);
   deviation = calcDeviation(mpLoopClosing->vdLoopTotal_ms, average);
   f << "Total Loop Closing: " << average << "$\\pm$" << deviation << endl
     << endl;
-  cout << "Total Loop Closing: " << average << "$\\pm$" << deviation << endl
+  cerr << "Total Loop Closing: " << average << "$\\pm$" << deviation << endl
        << endl;
 
   f << "Numb exec: " << mpLoopClosing->nLoop << endl;
-  cout << "Num exec: " << mpLoopClosing->nLoop << endl;
+  cerr << "Num exec: " << mpLoopClosing->nLoop << endl;
   average = calcAverage(mpLoopClosing->vnLoopKFs);
   deviation = calcDeviation(mpLoopClosing->vnLoopKFs, average);
   f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
-  cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
 
   f << endl << "Map Merging (mean$\\pm$std)" << endl;
-  cout << endl << "Map Merging (mean$\\pm$std)" << endl;
+  cerr << endl << "Map Merging (mean$\\pm$std)" << endl;
   average = calcAverage(mpLoopClosing->vdMergeMaps_ms);
   deviation = calcDeviation(mpLoopClosing->vdMergeMaps_ms, average);
   f << "Merge Maps: " << average << "$\\pm$" << deviation << endl;
-  cout << "Merge Maps: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Merge Maps: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdWeldingBA_ms);
   deviation = calcDeviation(mpLoopClosing->vdWeldingBA_ms, average);
   f << "Welding BA: " << average << "$\\pm$" << deviation << endl;
-  cout << "Welding BA: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Welding BA: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdMergeOptEss_ms);
   deviation = calcDeviation(mpLoopClosing->vdMergeOptEss_ms, average);
   f << "Optimization Ess.: " << average << "$\\pm$" << deviation << endl;
-  cout << "Optimization Ess.: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Optimization Ess.: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdMergeTotal_ms);
   deviation = calcDeviation(mpLoopClosing->vdMergeTotal_ms, average);
   f << "Total Map Merging: " << average << "$\\pm$" << deviation << endl
     << endl;
-  cout << "Total Map Merging: " << average << "$\\pm$" << deviation << endl
+  cerr << "Total Map Merging: " << average << "$\\pm$" << deviation << endl
        << endl;
 
   f << "Numb exec: " << mpLoopClosing->nMerges << endl;
-  cout << "Num exec: " << mpLoopClosing->nMerges << endl;
+  cerr << "Num exec: " << mpLoopClosing->nMerges << endl;
   average = calcAverage(mpLoopClosing->vnMergeKFs);
   deviation = calcDeviation(mpLoopClosing->vnMergeKFs, average);
   f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
-  cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vnMergeMPs);
   deviation = calcDeviation(mpLoopClosing->vnMergeMPs, average);
   f << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
-  cout << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
 
   f << endl << "Full GBA (mean$\\pm$std)" << endl;
-  cout << endl << "Full GBA (mean$\\pm$std)" << endl;
+  cerr << endl << "Full GBA (mean$\\pm$std)" << endl;
   average = calcAverage(mpLoopClosing->vdGBA_ms);
   deviation = calcDeviation(mpLoopClosing->vdGBA_ms, average);
   f << "GBA: " << average << "$\\pm$" << deviation << endl;
-  cout << "GBA: " << average << "$\\pm$" << deviation << endl;
+  cerr << "GBA: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdUpdateMap_ms);
   deviation = calcDeviation(mpLoopClosing->vdUpdateMap_ms, average);
   f << "Map Update: " << average << "$\\pm$" << deviation << endl;
-  cout << "Map Update: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Map Update: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vdFGBATotal_ms);
   deviation = calcDeviation(mpLoopClosing->vdFGBATotal_ms, average);
   f << "Total Full GBA: " << average << "$\\pm$" << deviation << endl << endl;
-  cout << "Total Full GBA: " << average << "$\\pm$" << deviation << endl
+  cerr << "Total Full GBA: " << average << "$\\pm$" << deviation << endl
        << endl;
 
   f << "Numb exec: " << mpLoopClosing->nFGBA_exec << endl;
-  cout << "Num exec: " << mpLoopClosing->nFGBA_exec << endl;
+  cerr << "Num exec: " << mpLoopClosing->nFGBA_exec << endl;
   f << "Numb abort: " << mpLoopClosing->nFGBA_abort << endl;
-  cout << "Num abort: " << mpLoopClosing->nFGBA_abort << endl;
+  cerr << "Num abort: " << mpLoopClosing->nFGBA_abort << endl;
   average = calcAverage(mpLoopClosing->vnGBAKFs);
   deviation = calcDeviation(mpLoopClosing->vnGBAKFs, average);
   f << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
-  cout << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Number of KFs: " << average << "$\\pm$" << deviation << endl;
   average = calcAverage(mpLoopClosing->vnGBAMPs);
   deviation = calcDeviation(mpLoopClosing->vnGBAMPs, average);
   f << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
-  cout << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
+  cerr << "Number of MPs: " << average << "$\\pm$" << deviation << endl;
 
   f.close();
 }
@@ -540,8 +539,9 @@ void Tracking::newParameterLoader(Settings *settings) {
   mK_(0, 2) = mpCamera->getParameter(2);
   mK_(1, 2) = mpCamera->getParameter(3);
 
-  if ((mSensor == System::STEREO || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
+  if ((sensor_type == SensorType::STEREO ||
+       sensor_type == SensorType::IMU_STEREO ||
+       sensor_type == SensorType::IMU_RGB_D) &&
       settings->cameraType() == Settings::KannalaBrandt) {
     mpCamera2 = settings->camera2();
     mpCamera2 = mpAtlas->AddCamera(mpCamera2);
@@ -551,13 +551,13 @@ void Tracking::newParameterLoader(Settings *settings) {
     mpFrameDrawer->both = true;
   }
 
-  if (mSensor == System::STEREO || mSensor == System::RGBD ||
-      mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO ||
+      (sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
     mbf = settings->bf();
     mThDepth = settings->b() * settings->thDepth();
   }
 
-  if (mSensor == System::RGBD || mSensor == System::IMU_RGBD) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
     mDepthMapFactor = settings->depthMapFactor();
     if (fabs(mDepthMapFactor) < 1e-5)
       mDepthMapFactor = 1;
@@ -579,11 +579,11 @@ void Tracking::newParameterLoader(Settings *settings) {
   mpORBextractorLeft = new ORBextractor(nFeatures, fScaleFactor, nLevels,
                                         fIniThFAST, fMinThFAST);
 
-  if (mSensor == System::STEREO || mSensor == System::IMU_STEREO)
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO)
     mpORBextractorRight = new ORBextractor(nFeatures, fScaleFactor, nLevels,
                                            fIniThFAST, fMinThFAST);
 
-  if (mSensor == System::MONOCULAR || mSensor == System::IMU_MONOCULAR)
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR)
     mpIniORBextractor = new ORBextractor(5 * nFeatures, fScaleFactor, nLevels,
                                          fIniThFAST, fMinThFAST);
 
@@ -606,7 +606,7 @@ void Tracking::newParameterLoader(Settings *settings) {
 
 bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
   mDistCoef = cv::Mat::zeros(4, 1, CV_32F);
-  cout << endl << "Camera Parameters: " << endl;
+  cerr << endl << "Camera Parameters: " << endl;
   bool b_miss_params = false;
 
   string sCameraName = fSettings["Camera.type"];
@@ -717,20 +717,20 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
 
     mpCamera = mpAtlas->AddCamera(mpCamera);
 
-    cout << "- Camera: Pinhole" << endl;
-    cout << "- Image scale: " << mImageScale << endl;
-    cout << "- fx: " << fx << endl;
-    cout << "- fy: " << fy << endl;
-    cout << "- cx: " << cx << endl;
-    cout << "- cy: " << cy << endl;
-    cout << "- k1: " << mDistCoef.at<float>(0) << endl;
-    cout << "- k2: " << mDistCoef.at<float>(1) << endl;
+    cerr << "- Camera: Pinhole" << endl;
+    cerr << "- Image scale: " << mImageScale << endl;
+    cerr << "- fx: " << fx << endl;
+    cerr << "- fy: " << fy << endl;
+    cerr << "- cx: " << cx << endl;
+    cerr << "- cy: " << cy << endl;
+    cerr << "- k1: " << mDistCoef.at<float>(0) << endl;
+    cerr << "- k2: " << mDistCoef.at<float>(1) << endl;
 
-    cout << "- p1: " << mDistCoef.at<float>(2) << endl;
-    cout << "- p2: " << mDistCoef.at<float>(3) << endl;
+    cerr << "- p1: " << mDistCoef.at<float>(2) << endl;
+    cerr << "- p2: " << mDistCoef.at<float>(3) << endl;
 
     if (mDistCoef.rows == 5)
-      cout << "- k3: " << mDistCoef.at<float>(4) << endl;
+      cerr << "- k3: " << mDistCoef.at<float>(4) << endl;
 
     mK = cv::Mat::eye(3, 3, CV_32F);
     mK.at<float>(0, 0) = fx;
@@ -837,16 +837,16 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
       vector<float> vCamCalib{fx, fy, cx, cy, k1, k2, k3, k4};
       mpCamera = new KannalaBrandt8(vCamCalib);
       mpCamera = mpAtlas->AddCamera(mpCamera);
-      cout << "- Camera: Fisheye" << endl;
-      cout << "- Image scale: " << mImageScale << endl;
-      cout << "- fx: " << fx << endl;
-      cout << "- fy: " << fy << endl;
-      cout << "- cx: " << cx << endl;
-      cout << "- cy: " << cy << endl;
-      cout << "- k1: " << k1 << endl;
-      cout << "- k2: " << k2 << endl;
-      cout << "- k3: " << k3 << endl;
-      cout << "- k4: " << k4 << endl;
+      cerr << "- Camera: Fisheye" << endl;
+      cerr << "- Image scale: " << mImageScale << endl;
+      cerr << "- fx: " << fx << endl;
+      cerr << "- fy: " << fy << endl;
+      cerr << "- cx: " << cx << endl;
+      cerr << "- cy: " << cy << endl;
+      cerr << "- k1: " << k1 << endl;
+      cerr << "- k2: " << k2 << endl;
+      cerr << "- k3: " << k3 << endl;
+      cerr << "- k4: " << k4 << endl;
 
       mK = cv::Mat::eye(3, 3, CV_32F);
       mK.at<float>(0, 0) = fx;
@@ -861,8 +861,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
       mK_(1, 2) = cy;
     }
 
-    if (mSensor == System::STEREO || mSensor == System::IMU_STEREO ||
-        mSensor == System::IMU_RGBD) {
+    if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO ||
+        (sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
       // Right camera
       // Camera calibration parameters
       cv::FileNode node = fSettings["Camera2.fx"];
@@ -946,25 +946,25 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
       if (!node.empty() && node.isInt()) {
         leftLappingBegin = node.operator int();
       } else {
-        cout << "WARNING: Camera.lappingBegin not correctly defined" << endl;
+        cerr << "WARNING: Camera.lappingBegin not correctly defined" << endl;
       }
       node = fSettings["Camera.lappingEnd"];
       if (!node.empty() && node.isInt()) {
         leftLappingEnd = node.operator int();
       } else {
-        cout << "WARNING: Camera.lappingEnd not correctly defined" << endl;
+        cerr << "WARNING: Camera.lappingEnd not correctly defined" << endl;
       }
       node = fSettings["Camera2.lappingBegin"];
       if (!node.empty() && node.isInt()) {
         rightLappingBegin = node.operator int();
       } else {
-        cout << "WARNING: Camera2.lappingBegin not correctly defined" << endl;
+        cerr << "WARNING: Camera2.lappingBegin not correctly defined" << endl;
       }
       node = fSettings["Camera2.lappingEnd"];
       if (!node.empty() && node.isInt()) {
         rightLappingEnd = node.operator int();
       } else {
-        cout << "WARNING: Camera2.lappingEnd not correctly defined" << endl;
+        cerr << "WARNING: Camera2.lappingEnd not correctly defined" << endl;
       }
 
       node = fSettings["Tlr"];
@@ -1012,24 +1012,24 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
         static_cast<KannalaBrandt8 *>(mpCamera2)->mvLappingArea[1] =
             rightLappingEnd;
 
-        cout << "- Camera1 Lapping: " << leftLappingBegin << ", "
+        cerr << "- Camera1 Lapping: " << leftLappingBegin << ", "
              << leftLappingEnd << endl;
 
-        cout << endl << "Camera2 Parameters:" << endl;
-        cout << "- Camera: Fisheye" << endl;
-        cout << "- Image scale: " << mImageScale << endl;
-        cout << "- fx: " << fx << endl;
-        cout << "- fy: " << fy << endl;
-        cout << "- cx: " << cx << endl;
-        cout << "- cy: " << cy << endl;
-        cout << "- k1: " << k1 << endl;
-        cout << "- k2: " << k2 << endl;
-        cout << "- k3: " << k3 << endl;
-        cout << "- k4: " << k4 << endl;
+        cerr << endl << "Camera2 Parameters:" << endl;
+        cerr << "- Camera: Fisheye" << endl;
+        cerr << "- Image scale: " << mImageScale << endl;
+        cerr << "- fx: " << fx << endl;
+        cerr << "- fy: " << fy << endl;
+        cerr << "- cx: " << cx << endl;
+        cerr << "- cy: " << cy << endl;
+        cerr << "- k1: " << k1 << endl;
+        cerr << "- k2: " << k2 << endl;
+        cerr << "- k3: " << k3 << endl;
+        cerr << "- k4: " << k4 << endl;
 
-        cout << "- mTlr: \n" << cvTlr << endl;
+        cerr << "- mTlr: \n" << cvTlr << endl;
 
-        cout << "- Camera2 Lapping: " << rightLappingBegin << ", "
+        cerr << "- Camera2 Lapping: " << rightLappingBegin << ", "
              << rightLappingEnd << endl;
       }
     }
@@ -1044,8 +1044,8 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
          << endl;
   }
 
-  if (mSensor == System::STEREO || mSensor == System::RGBD ||
-      mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO ||
+      (sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
     cv::FileNode node = fSettings["Camera.bf"];
     if (!node.empty() && node.isReal()) {
       mbf = node.real();
@@ -1067,24 +1067,24 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
   mMinFrames = 0;
   mMaxFrames = fps;
 
-  cout << "- fps: " << fps << endl;
+  cerr << "- fps: " << fps << endl;
 
   int nRGB = fSettings["Camera.RGB"];
   mbRGB = nRGB;
 
   if (mbRGB)
-    cout << "- color order: RGB (ignored if grayscale)" << endl;
+    cerr << "- color order: RGB (ignored if grayscale)" << endl;
   else
-    cout << "- color order: BGR (ignored if grayscale)" << endl;
+    cerr << "- color order: BGR (ignored if grayscale)" << endl;
 
-  if (mSensor == System::STEREO || mSensor == System::RGBD ||
-      mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO ||
+      (sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
     float fx = mpCamera->getParameter(0);
     cv::FileNode node = fSettings["ThDepth"];
     if (!node.empty() && node.isReal()) {
       mThDepth = node.real();
       mThDepth = mbf * mThDepth / fx;
-      cout << endl
+      cerr << endl
            << "Depth Threshold (Close/Far Points): " << mThDepth << endl;
     } else {
       cerr << "*ThDepth parameter doesn't exist or is not a real number*"
@@ -1093,7 +1093,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings) {
     }
   }
 
-  if (mSensor == System::RGBD || mSensor == System::IMU_RGBD) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
     cv::FileNode node = fSettings["DepthMapFactor"];
     if (!node.empty() && node.isReal()) {
       mDepthMapFactor = node.real();
@@ -1177,20 +1177,20 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings) {
   mpORBextractorLeft = new ORBextractor(nFeatures, fScaleFactor, nLevels,
                                         fIniThFAST, fMinThFAST);
 
-  if (mSensor == System::STEREO || mSensor == System::IMU_STEREO)
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO)
     mpORBextractorRight = new ORBextractor(nFeatures, fScaleFactor, nLevels,
                                            fIniThFAST, fMinThFAST);
 
-  if (mSensor == System::MONOCULAR || mSensor == System::IMU_MONOCULAR)
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR)
     mpIniORBextractor = new ORBextractor(5 * nFeatures, fScaleFactor, nLevels,
                                          fIniThFAST, fMinThFAST);
 
-  cout << endl << "ORB Extractor Parameters: " << endl;
-  cout << "- Number of Features: " << nFeatures << endl;
-  cout << "- Scale Levels: " << nLevels << endl;
-  cout << "- Scale Factor: " << fScaleFactor << endl;
-  cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
-  cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
+  cerr << endl << "ORB Extractor Parameters: " << endl;
+  cerr << "- Number of Features: " << nFeatures << endl;
+  cerr << "- Scale Levels: " << nLevels << endl;
+  cerr << "- Scale Factor: " << fScaleFactor << endl;
+  cerr << "- Initial Fast Threshold: " << fIniThFAST << endl;
+  cerr << "- Minimum Fast Threshold: " << fMinThFAST << endl;
 
   return true;
 }
@@ -1210,8 +1210,8 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings) {
     cerr << "*Tbc matrix doesn't exist*" << endl;
     b_miss_params = true;
   }
-  cout << endl;
-  cout << "Left camera to Imu Transform (Tbc): " << endl << cvTbc << endl;
+  cerr << endl;
+  cerr << "Left camera to Imu Transform (Tbc): " << endl << cvTbc << endl;
   Eigen::Matrix<float, 4, 4, Eigen::RowMajor> eigTbc(cvTbc.ptr<float>(0));
   Sophus::SE3f Tbc(eigTbc);
 
@@ -1222,7 +1222,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings) {
   }
 
   if (!mInsertKFsLost)
-    cout << "Do not insert keyframes when lost visual tracking " << endl;
+    cerr << "Do not insert keyframes when lost visual tracking " << endl;
 
   float Ng, Na, Ngw, Naw;
 
@@ -1279,19 +1279,19 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings) {
   }
 
   if (mFastInit)
-    cout << "Fast IMU initialization. Acceleration is not checked \n";
+    cerr << "Fast IMU initialization. Acceleration is not checked \n";
 
   if (b_miss_params) {
     return false;
   }
 
   const float sf = sqrt(mImuFreq);
-  cout << endl;
-  cout << "IMU frequency: " << mImuFreq << " Hz" << endl;
-  cout << "IMU gyro noise: " << Ng << " rad/s/sqrt(Hz)" << endl;
-  cout << "IMU gyro walk: " << Ngw << " rad/s^2/sqrt(Hz)" << endl;
-  cout << "IMU accelerometer noise: " << Na << " m/s^2/sqrt(Hz)" << endl;
-  cout << "IMU accelerometer walk: " << Naw << " m/s^3/sqrt(Hz)" << endl;
+  cerr << endl;
+  cerr << "IMU frequency: " << mImuFreq << " Hz" << endl;
+  cerr << "IMU gyro noise: " << Ng << " rad/s/sqrt(Hz)" << endl;
+  cerr << "IMU gyro walk: " << Ngw << " rad/s^2/sqrt(Hz)" << endl;
+  cerr << "IMU accelerometer noise: " << Na << " m/s^2/sqrt(Hz)" << endl;
+  cerr << "IMU accelerometer walk: " << Naw << " m/s^3/sqrt(Hz)" << endl;
 
   mpImuCalib = new IMU::Calib(Tbc, Ng * sf, Na * sf, Ngw / sf, Naw / sf);
 
@@ -1319,14 +1319,14 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
                                        const cv::Mat &imRectRight,
                                        const double &timestamp,
                                        string filename) {
-  // cout << "GrabImageStereo" << endl;
+  // cerr << "GrabImageStereo" << endl;
 
   mImGray = imRectLeft;
   cv::Mat imGrayRight = imRectRight;
   mImRight = imRectRight;
 
   if (mImGray.channels() == 3) {
-    // cout << "Image with 3 channels" << endl;
+    // cerr << "Image with 3 channels" << endl;
     if (mbRGB) {
       cvtColor(mImGray, mImGray, cv::COLOR_RGB2GRAY);
       cvtColor(imGrayRight, imGrayRight, cv::COLOR_RGB2GRAY);
@@ -1335,7 +1335,7 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
       cvtColor(imGrayRight, imGrayRight, cv::COLOR_BGR2GRAY);
     }
   } else if (mImGray.channels() == 4) {
-    // cout << "Image with 4 channels" << endl;
+    // cerr << "Image with 4 channels" << endl;
     if (mbRGB) {
       cvtColor(mImGray, mImGray, cv::COLOR_RGBA2GRAY);
       cvtColor(imGrayRight, imGrayRight, cv::COLOR_RGBA2GRAY);
@@ -1345,27 +1345,27 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
     }
   }
 
-  // cout << "Incoming frame creation" << endl;
+  // cerr << "Incoming frame creation" << endl;
 
-  if (mSensor == System::STEREO && !mpCamera2)
+  if (sensor_type == SensorType::STEREO && !mpCamera2)
     mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft,
                           mpORBextractorRight, mpORBVocabulary, mK, mDistCoef,
                           mbf, mThDepth, mpCamera);
-  else if (mSensor == System::STEREO && mpCamera2)
+  else if (sensor_type == SensorType::STEREO && mpCamera2)
     mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft,
                           mpORBextractorRight, mpORBVocabulary, mK, mDistCoef,
                           mbf, mThDepth, mpCamera, mpCamera2, mTlr);
-  else if (mSensor == System::IMU_STEREO && !mpCamera2)
+  else if (sensor_type == SensorType::IMU_STEREO && !mpCamera2)
     mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft,
                           mpORBextractorRight, mpORBVocabulary, mK, mDistCoef,
                           mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
-  else if (mSensor == System::IMU_STEREO && mpCamera2)
+  else if (sensor_type == SensorType::IMU_STEREO && mpCamera2)
     mCurrentFrame =
         Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft,
               mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf,
               mThDepth, mpCamera, mpCamera2, mTlr, &mLastFrame, *mpImuCalib);
 
-  // cout << "Incoming frame ended" << endl;
+  // cerr << "Incoming frame ended" << endl;
 
   mCurrentFrame.mNameFile = filename;
   mCurrentFrame.mnDataset = mnNumDataset;
@@ -1375,9 +1375,9 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
   vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
 #endif
 
-  // cout << "Tracking start" << endl;
+  // cerr << "Tracking start" << endl;
   Track();
-  // cout << "Tracking end" << endl;
+  // cerr << "Tracking end" << endl;
 
   return mCurrentFrame.GetPose();
 }
@@ -1402,11 +1402,11 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
   if ((fabs(mDepthMapFactor - 1.0f) > 1e-5) || imDepth.type() != CV_32F)
     imDepth.convertTo(imDepth, CV_32F, mDepthMapFactor);
 
-  if (mSensor == System::RGBD)
+  if (sensor_type == SensorType::RGB_D)
     mCurrentFrame =
         Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary,
               mK, mDistCoef, mbf, mThDepth, mpCamera);
-  else if (mSensor == System::IMU_RGBD)
+  else if (sensor_type == SensorType::IMU_RGB_D)
     mCurrentFrame =
         Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary,
               mK, mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
@@ -1439,7 +1439,7 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im,
       cvtColor(mImGray, mImGray, cv::COLOR_BGRA2GRAY);
   }
 
-  if (mSensor == System::MONOCULAR) {
+  if (sensor_type == SensorType::MONOCULAR) {
     if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET ||
         (lastID - initID) < mMaxFrames)
       mCurrentFrame =
@@ -1449,7 +1449,7 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im,
       mCurrentFrame =
           Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
                 mpCamera, mDistCoef, mbf, mThDepth);
-  } else if (mSensor == System::IMU_MONOCULAR) {
+  } else if (sensor_type == SensorType::IMU_MONOCULAR) {
     if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET) {
       mCurrentFrame =
           Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
@@ -1638,7 +1638,7 @@ bool Tracking::PredictStateIMU() {
     mCurrentFrame.mPredBias = mCurrentFrame.mImuBias;
     return true;
   } else
-    cout << "not IMU prediction!!" << endl;
+    cerr << "not IMU prediction!!" << endl;
 
   return false;
 }
@@ -1650,14 +1650,14 @@ void Tracking::ResetFrameIMU() {
 void Tracking::Track() {
 
   if (bStepByStep) {
-    cout << "Tracking: Waiting to the next step" << endl;
+    cerr << "Tracking: Waiting to the next step" << endl;
     while (!mbStep && bStepByStep)
       usleep(500);
     mbStep = false;
   }
 
   if (mpLocalMapper->mbBadImu) {
-    cout << "TRACK: Reset map because local mapper set the bad imu flag "
+    cerr << "TRACK: Reset map because local mapper set the bad imu flag "
          << endl;
     mpSystem->ResetActiveMap();
     return;
@@ -1665,7 +1665,7 @@ void Tracking::Track() {
 
   Map *pCurrentMap = mpAtlas->GetCurrentMap();
   if (!pCurrentMap) {
-    cout << "ERROR: There is not an active map in the atlas" << endl;
+    cerr << "ERROR: There is not an active map in the atlas" << endl;
   }
 
   if (mState != NO_IMAGES_YET) {
@@ -1678,13 +1678,13 @@ void Tracking::Track() {
       CreateMapInAtlas();
       return;
     } else if (mCurrentFrame.mTimeStamp > mLastFrame.mTimeStamp + 1.0) {
-      // cout << mCurrentFrame.mTimeStamp << ", " << mLastFrame.mTimeStamp <<
-      // endl; cout << "id last: " << mLastFrame.mnId << "    id curr: " <<
+      // cerr << mCurrentFrame.mTimeStamp << ", " << mLastFrame.mTimeStamp <<
+      // endl; cerr << "id last: " << mLastFrame.mnId << "    id curr: " <<
       // mCurrentFrame.mnId << endl;
       if (mpAtlas->isInertial()) {
 
         if (mpAtlas->isImuInitialized()) {
-          cout << "Timestamp jump detected. State set to LOST. Reseting IMU "
+          cerr << "Timestamp jump detected. State set to LOST. Reseting IMU "
                   "integration..."
                << endl;
           if (!pCurrentMap->GetIniertialBA2()) {
@@ -1693,7 +1693,7 @@ void Tracking::Track() {
             CreateMapInAtlas();
           }
         } else {
-          cout << "Timestamp jump detected, before IMU initialization. "
+          cerr << "Timestamp jump detected, before IMU initialization. "
                   "Reseting..."
                << endl;
           mpSystem->ResetActiveMap();
@@ -1703,9 +1703,7 @@ void Tracking::Track() {
     }
   }
 
-  if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
-      mpLastKeyFrame)
+  if ((sensor_type & SensorType::USE_IMU) && mpLastKeyFrame)
     mCurrentFrame.SetNewBias(mpLastKeyFrame->GetImuBias());
 
   if (mState == NO_IMAGES_YET) {
@@ -1714,9 +1712,7 @@ void Tracking::Track() {
 
   mLastProcessedState = mState;
 
-  if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
-      !mbCreatedMap) {
+  if ((sensor_type & SensorType::USE_IMU) && !mbCreatedMap) {
 #ifdef REGISTER_TIMES
     chrono::steady_clock::time_point time_StartPreIMU =
         chrono::steady_clock::now();
@@ -1747,8 +1743,8 @@ void Tracking::Track() {
   }
 
   if (mState == NOT_INITIALIZED) {
-    if (mSensor == System::STEREO || mSensor == System::RGBD ||
-        mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+    if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::STEREO ||
+        (sensor_type & SensorType::CAMERA_MASK) == SensorType::RGB_D) {
       InitializeStereo();
     } else {
       InitializeMonocular();
@@ -1801,11 +1797,10 @@ void Tracking::Track() {
 
         if (!bOK) {
           if (mCurrentFrame.mnId <= (mnLastRelocFrameId + mnFramesToResetIMU) &&
-              (mSensor == System::IMU_MONOCULAR ||
-               mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)) {
+              (sensor_type & SensorType::USE_IMU)) {
             mState = LOST;
           } else if (pCurrentMap->KeyFramesInMap() > 10) {
-            // cout << "KF in map: " << pCurrentMap->KeyFramesInMap() << endl;
+            // cerr << "KF in map: " << pCurrentMap->KeyFramesInMap() << endl;
             mState = RECENTLY_LOST;
             mTimeStampLost = mCurrentFrame.mTimeStamp;
           } else {
@@ -1818,8 +1813,7 @@ void Tracking::Track() {
           Verbose::Log("Lost for a short time", Verbose::VERBOSITY_NORMAL);
 
           bOK = true;
-          if ((mSensor == System::IMU_MONOCULAR ||
-               mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)) {
+          if ((sensor_type & SensorType::USE_IMU)) {
             if (pCurrentMap->isImuInitialized())
               PredictStateIMU();
             else
@@ -1834,8 +1828,8 @@ void Tracking::Track() {
           } else {
             // Relocalization
             bOK = Relocalization();
-            // cout << "mCurrentFrame.mTimeStamp:" <<
-            // to_string(mCurrentFrame.mTimeStamp) << endl; cout <<
+            // cerr << "mCurrentFrame.mTimeStamp:" <<
+            // to_string(mCurrentFrame.mTimeStamp) << endl; cerr <<
             // "mTimeStampLost:" << to_string(mTimeStampLost) << endl;
             if (mCurrentFrame.mTimeStamp - mTimeStampLost > 3.0f && !bOK) {
               mState = LOST;
@@ -1866,8 +1860,7 @@ void Tracking::Track() {
       // Localization Mode: Local Mapping is deactivated (TODO Not available in
       // inertial mode)
       if (mState == LOST) {
-        if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-            mSensor == System::IMU_RGBD)
+        if (sensor_type & SensorType::USE_IMU)
           Verbose::Log("IMU. State LOST", Verbose::VERBOSITY_NORMAL);
         bOK = Relocalization();
       } else {
@@ -1945,7 +1938,7 @@ void Tracking::Track() {
         bOK = TrackLocalMap();
       }
       if (!bOK)
-        cout << "Fail to track local map!" << endl;
+        cerr << "Fail to track local map!" << endl;
     } else {
       // mbVO true means that there are few matches to MapPoints in the map. We
       // cannot retrieve a local map and therefore we do not perform
@@ -1958,13 +1951,12 @@ void Tracking::Track() {
     if (bOK)
       mState = OK;
     else if (mState == OK) {
-      if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-          mSensor == System::IMU_RGBD) {
+      if (sensor_type & SensorType::USE_IMU) {
         Verbose::Log("Track lost for less than one second...",
                      Verbose::VERBOSITY_NORMAL);
         if (!pCurrentMap->isImuInitialized() ||
             !pCurrentMap->GetIniertialBA2()) {
-          cout << "IMU is not or recently initialized. Reseting active map..."
+          cerr << "IMU is not or recently initialized. Reseting active map..."
                << endl;
           mpSystem->ResetActiveMap();
         }
@@ -1984,8 +1976,7 @@ void Tracking::Track() {
     // modified)
     if ((mCurrentFrame.mnId < (mnLastRelocFrameId + mnFramesToResetIMU)) &&
         (mCurrentFrame.mnId > mnFramesToResetIMU) &&
-        (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-         mSensor == System::IMU_RGBD) &&
+        (sensor_type & SensorType::USE_IMU) &&
         pCurrentMap->isImuInitialized()) {
       // TODO check this situation
       Verbose::Log("Saving pointer to frame. imu needs reset...",
@@ -2001,7 +1992,7 @@ void Tracking::Track() {
     if (pCurrentMap->isImuInitialized()) {
       if (bOK) {
         if (mCurrentFrame.mnId == (mnLastRelocFrameId + mnFramesToResetIMU)) {
-          cout << "RESETING FRAME!!!" << endl;
+          cerr << "RESETING FRAME!!!" << endl;
           ResetFrameIMU();
         } else if (mCurrentFrame.mnId > (mnLastRelocFrameId + 30))
           mLastBias = mCurrentFrame.mImuBias;
@@ -2033,8 +2024,7 @@ void Tracking::Track() {
         mbVelocity = false;
       }
 
-      if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-          mSensor == System::IMU_RGBD)
+      if (sensor_type & SensorType::USE_IMU)
         mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
 
       // Clean VO matches
@@ -2065,9 +2055,7 @@ void Tracking::Track() {
       // Check if we need to insert a new keyframe
       // if(bNeedKF && bOK)
       if (bNeedKF && (bOK || (mInsertKFsLost && mState == RECENTLY_LOST &&
-                              (mSensor == System::IMU_MONOCULAR ||
-                               mSensor == System::IMU_STEREO ||
-                               mSensor == System::IMU_RGBD))))
+                              (sensor_type & SensorType::USE_IMU))))
         CreateNewKeyFrame();
 
 #ifdef REGISTER_TIMES
@@ -2097,8 +2085,7 @@ void Tracking::Track() {
         mpSystem->ResetActiveMap();
         return;
       }
-      if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-          mSensor == System::IMU_RGBD)
+      if (sensor_type & SensorType::USE_IMU)
         if (!pCurrentMap->isImuInitialized()) {
           Verbose::Log("Track lost before IMU initialisation, reseting...",
                        Verbose::VERBOSITY_QUIET);
@@ -2149,36 +2136,31 @@ void Tracking::Track() {
 
 void Tracking::InitializeStereo() {
   if (mCurrentFrame.N > 500) {
-    if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+    if (sensor_type == SensorType::IMU_STEREO ||
+        sensor_type == SensorType::IMU_RGB_D) {
       if (!mCurrentFrame.mpImuPreintegrated || !mLastFrame.mpImuPreintegrated) {
-        cout << "not IMU meas" << endl;
+        cerr << "not IMU meas" << endl;
         return;
       }
-
       if (!mFastInit && (mCurrentFrame.mpImuPreintegratedFrame->avgA -
                          mLastFrame.mpImuPreintegratedFrame->avgA)
                                 .norm() < 0.5) {
-        cout << "not enough acceleration" << endl;
+        cerr << "not enough acceleration" << endl;
         return;
       }
-
       if (mpImuPreintegratedFromLastKF)
         delete mpImuPreintegratedFromLastKF;
-
       mpImuPreintegratedFromLastKF =
           new IMU::Preintegrated(IMU::Bias(), *mpImuCalib);
       mCurrentFrame.mpImuPreintegrated = mpImuPreintegratedFromLastKF;
-    }
-
-    // Set Frame pose to the origin (In case of inertial SLAM to imu)
-    if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
       Eigen::Matrix3f Rwb0 = mCurrentFrame.mImuCalib.mTcb.rotationMatrix();
       Eigen::Vector3f twb0 = mCurrentFrame.mImuCalib.mTcb.translation();
       Eigen::Vector3f Vwb0;
       Vwb0.setZero();
       mCurrentFrame.SetImuPoseVelocity(Rwb0, twb0, Vwb0);
-    } else
+    } else {
       mCurrentFrame.SetPose(Sophus::SE3f());
+    }
 
     // Create KeyFrame
     KeyFrame *pKFini =
@@ -2234,7 +2216,7 @@ void Tracking::InitializeStereo() {
                      to_string(mpAtlas->MapPointsInMap()) + " points",
                  Verbose::VERBOSITY_QUIET);
 
-    // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
+    // cerr << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
 
     mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -2271,7 +2253,7 @@ void Tracking::InitializeMonocular() {
 
       fill(mvIniMatches.begin(), mvIniMatches.end(), -1);
 
-      if (mSensor == System::IMU_MONOCULAR) {
+      if (sensor_type == SensorType::IMU_MONOCULAR) {
         if (mpImuPreintegratedFromLastKF) {
           delete mpImuPreintegratedFromLastKF;
         }
@@ -2287,7 +2269,7 @@ void Tracking::InitializeMonocular() {
     }
   } else {
     if (((int)mCurrentFrame.mvKeys.size() <= 100) ||
-        ((mSensor == System::IMU_MONOCULAR) &&
+        ((sensor_type == SensorType::IMU_MONOCULAR) &&
          (mLastFrame.mTimeStamp - mInitialFrame.mTimeStamp > 1.0))) {
       mbReadyToInitialize = false;
       ssStateMsg << "Too few features (B=" << mCurrentFrame.mvKeys.size()
@@ -2338,7 +2320,7 @@ void Tracking::CreateInitialMapMonocular() {
   KeyFrame *pKFcur =
       new KeyFrame(mCurrentFrame, mpAtlas->GetCurrentMap(), mpKeyFrameDB);
 
-  if (mSensor == System::IMU_MONOCULAR)
+  if (sensor_type == SensorType::IMU_MONOCULAR)
     pKFini->mpImuPreintegrated = (IMU::Preintegrated *)(NULL);
 
   pKFini->ComputeBoW();
@@ -2391,7 +2373,7 @@ void Tracking::CreateInitialMapMonocular() {
 
   float medianDepth = pKFini->ComputeSceneMedianDepth(2);
   float invMedianDepth;
-  if (mSensor == System::IMU_MONOCULAR)
+  if (sensor_type == SensorType::IMU_MONOCULAR)
     invMedianDepth = 4.0f / medianDepth; // 4.0f
   else
     invMedianDepth = 1.0f / medianDepth;
@@ -2419,7 +2401,7 @@ void Tracking::CreateInitialMapMonocular() {
     }
   }
 
-  if (mSensor == System::IMU_MONOCULAR) {
+  if (sensor_type == SensorType::IMU_MONOCULAR) {
     pKFcur->mPrevKF = pKFini;
     pKFini->mNextKF = pKFcur;
     pKFcur->mpImuPreintegrated = mpImuPreintegratedFromLastKF;
@@ -2470,8 +2452,7 @@ void Tracking::CreateInitialMapMonocular() {
 void Tracking::CreateMapInAtlas() {
   mnLastInitFrameId = mCurrentFrame.mnId;
   mpAtlas->CreateNewMap();
-  if (mSensor == System::IMU_STEREO || mSensor == System::IMU_MONOCULAR ||
-      mSensor == System::IMU_RGBD)
+  if (sensor_type & SensorType::USE_IMU)
     mpAtlas->SetInertialSensor();
   mbSetInit = false;
 
@@ -2486,13 +2467,11 @@ void Tracking::CreateMapInAtlas() {
                Verbose::VERBOSITY_NORMAL);
   mbVO =
       false; // Init value for know if there are enough MapPoints in the last KF
-  if (mSensor == System::MONOCULAR || mSensor == System::IMU_MONOCULAR) {
+  if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR) {
     mbReadyToInitialize = false;
   }
 
-  if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
-      mpImuPreintegratedFromLastKF) {
+  if ((sensor_type & SensorType::USE_IMU) && mpImuPreintegratedFromLastKF) {
     delete mpImuPreintegratedFromLastKF;
     mpImuPreintegratedFromLastKF =
         new IMU::Preintegrated(IMU::Bias(), *mpImuCalib);
@@ -2537,7 +2516,7 @@ bool Tracking::TrackReferenceKeyFrame() {
       matcher.SearchByBoW(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
 
   if (nmatches < 15) {
-    cout << "TRACK_REF_KF: Less than 15 matches!!\n";
+    cerr << "TRACK_REF_KF: Less than 15 matches!!\n";
     return false;
   }
 
@@ -2546,7 +2525,7 @@ bool Tracking::TrackReferenceKeyFrame() {
 
   // mCurrentFrame.PrintPointDistribution();
 
-  // cout << " TrackReferenceKeyFrame mLastFrame.mTcw:  " << mLastFrame.mTcw <<
+  // cerr << " TrackReferenceKeyFrame mLastFrame.mTcw:  " << mLastFrame.mTcw <<
   // endl;
   Optimizer::PoseOptimization(&mCurrentFrame);
 
@@ -2573,8 +2552,7 @@ bool Tracking::TrackReferenceKeyFrame() {
     }
   }
 
-  if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-      mSensor == System::IMU_RGBD)
+  if (sensor_type & SensorType::USE_IMU)
     return true;
   else
     return nmatchesMap >= 10;
@@ -2586,8 +2564,9 @@ void Tracking::UpdateLastFrame() {
   Sophus::SE3f Tlr = mlRelativeFramePoses.back();
   mLastFrame.SetPose(Tlr * pRef->GetPose());
 
-  if (mnLastKeyFrameId == mLastFrame.mnId || mSensor == System::MONOCULAR ||
-      mSensor == System::IMU_MONOCULAR || !mbOnlyTracking)
+  if (mnLastKeyFrameId == mLastFrame.mnId ||
+      (sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR ||
+      !mbOnlyTracking)
     return;
 
   // Create "visual odometry" MapPoints
@@ -2668,14 +2647,14 @@ bool Tracking::TrackWithMotionModel() {
   // Project points seen in previous frame
   int th;
 
-  if (mSensor == System::STEREO)
+  if (sensor_type == SensorType::STEREO)
     th = 7;
   else
     th = 15;
 
   int nmatches = matcher.SearchByProjection(
       mCurrentFrame, mLastFrame, th,
-      mSensor == System::MONOCULAR || mSensor == System::IMU_MONOCULAR);
+      (sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR);
 
   // If few matches, uses a wider window search
   if (nmatches < 20) {
@@ -2684,17 +2663,16 @@ bool Tracking::TrackWithMotionModel() {
     fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(),
          static_cast<MapPoint *>(NULL));
 
-    nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th,
-                                          mSensor == System::MONOCULAR ||
-                                              mSensor == System::IMU_MONOCULAR);
+    nmatches = matcher.SearchByProjection(
+        mCurrentFrame, mLastFrame, 2 * th,
+        (sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR);
     Verbose::Log("Matches with wider search: " + to_string(nmatches),
                  Verbose::VERBOSITY_NORMAL);
   }
 
   if (nmatches < 20) {
     Verbose::Log("Not enough matches!!", Verbose::VERBOSITY_NORMAL);
-    if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-        mSensor == System::IMU_RGBD)
+    if (sensor_type & SensorType::USE_IMU)
       return true;
     else
       return false;
@@ -2729,8 +2707,7 @@ bool Tracking::TrackWithMotionModel() {
     return nmatches > 20;
   }
 
-  if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-      mSensor == System::IMU_RGBD)
+  if (sensor_type & SensorType::USE_IMU)
     return true;
   else
     return nmatchesMap >= 10;
@@ -2799,7 +2776,7 @@ bool Tracking::TrackLocalMap() {
             mnMatchesInliers++;
         } else
           mnMatchesInliers++;
-      } else if (mSensor == System::STEREO)
+      } else if (sensor_type == SensorType::STEREO)
         mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint *>(NULL);
     }
   }
@@ -2814,13 +2791,14 @@ bool Tracking::TrackLocalMap() {
   if ((mnMatchesInliers > 10) && (mState == RECENTLY_LOST))
     return true;
 
-  if (mSensor == System::IMU_MONOCULAR) {
+  if (sensor_type == SensorType::IMU_MONOCULAR) {
     if ((mnMatchesInliers < 15 && mpAtlas->isImuInitialized()) ||
         (mnMatchesInliers < 50 && !mpAtlas->isImuInitialized())) {
       return false;
     } else
       return true;
-  } else if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+  } else if (sensor_type == SensorType::IMU_STEREO ||
+             sensor_type == SensorType::IMU_RGB_D) {
     if (mnMatchesInliers < 15) {
       return false;
     } else
@@ -2834,13 +2812,13 @@ bool Tracking::TrackLocalMap() {
 }
 
 bool Tracking::NeedNewKeyFrame() {
-  if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
+  if ((sensor_type & SensorType::USE_IMU) &&
       !mpAtlas->GetCurrentMap()->isImuInitialized()) {
-    if (mSensor == System::IMU_MONOCULAR &&
+    if (sensor_type == SensorType::IMU_MONOCULAR &&
         (mCurrentFrame.mTimeStamp - mpLastKeyFrame->mTimeStamp) >= 0.25)
       return true;
-    else if ((mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) &&
+    else if ((sensor_type == SensorType::IMU_STEREO ||
+              sensor_type == SensorType::IMU_RGB_D) &&
              (mCurrentFrame.mTimeStamp - mpLastKeyFrame->mTimeStamp) >= 0.25)
       return true;
     else
@@ -2852,9 +2830,9 @@ bool Tracking::NeedNewKeyFrame() {
 
   // If Local Mapping is freezed by a Loop Closure do not insert keyframes
   if (mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()) {
-    /*if(mSensor == System::MONOCULAR)
+    /*if(sensor_type == SensorType::MONOCULAR)
     {
-        cout << "NeedNewKeyFrame: localmap stopped" << endl;
+        cerr << "NeedNewKeyFrame: localmap stopped" << endl;
     }*/
     return false;
   }
@@ -2882,7 +2860,7 @@ bool Tracking::NeedNewKeyFrame() {
   int nNonTrackedClose = 0;
   int nTrackedClose = 0;
 
-  if (mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR) {
+  if ((sensor_type & SensorType::CAMERA_MASK) != SensorType::MONOCULAR) {
     int N = (mCurrentFrame.Nleft == -1) ? mCurrentFrame.N : mCurrentFrame.Nleft;
     for (int i = 0; i < N; i++) {
       if (mCurrentFrame.mvDepth[i] > 0 && mCurrentFrame.mvDepth[i] < mThDepth) {
@@ -2908,20 +2886,20 @@ bool Tracking::NeedNewKeyFrame() {
 
   /*int nClosedPoints = nTrackedClose + nNonTrackedClose;
   const int thStereoClosedPoints = 15;
-  if(nClosedPoints < thStereoClosedPoints && (mSensor==System::STEREO ||
-  mSensor==System::IMU_STEREO))
+  if(nClosedPoints < thStereoClosedPoints && (sensor_type==SensorType::STEREO ||
+  sensor_type==SensorType::IMU_STEREO))
   {
       //Pseudo-monocular, there are not enough close points to be confident
   about the stereo observations. thRefRatio = 0.9f;
   }*/
 
-  if (mSensor == System::MONOCULAR)
+  if (sensor_type == SensorType::MONOCULAR)
     thRefRatio = 0.9f;
 
   if (mpCamera2)
     thRefRatio = 0.75f;
 
-  if (mSensor == System::IMU_MONOCULAR) {
+  if (sensor_type == SensorType::IMU_MONOCULAR) {
     if (mnMatchesInliers > 350) // Points tracked from the local map
       thRefRatio = 0.75f;
     else
@@ -2937,8 +2915,8 @@ bool Tracking::NeedNewKeyFrame() {
        bLocalMappingIdle); // mpLocalMapper->KeyframesInQueue() < 2);
   // Condition 1c: tracking is weak
   const bool c1c =
-      mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR &&
-      mSensor != System::IMU_STEREO && mSensor != System::IMU_RGBD &&
+      sensor_type != SensorType::MONOCULAR &&
+      !(sensor_type & SensorType::USE_IMU) &&
       (mnMatchesInliers < nRefMatches * 0.25 || bNeedToInsertClose);
   // Condition 2: Few tracked points compared to reference keyframe. Lots of
   // visual odometry compared to map matches.
@@ -2946,15 +2924,16 @@ bool Tracking::NeedNewKeyFrame() {
       (((mnMatchesInliers < nRefMatches * thRefRatio || bNeedToInsertClose)) &&
        mnMatchesInliers > 15);
 
-  // cout << "NeedNewKF: c1a=" << c1a << "; c1b=" << c1b << "; c1c=" << c1c <<
+  // cerr << "NeedNewKF: c1a=" << c1a << "; c1b=" << c1b << "; c1c=" << c1c <<
   // "; c2=" << c2 << endl;
   //  Temporal condition for Inertial cases
   bool c3 = false;
   if (mpLastKeyFrame) {
-    if (mSensor == System::IMU_MONOCULAR) {
+    if (sensor_type == SensorType::IMU_MONOCULAR) {
       if ((mCurrentFrame.mTimeStamp - mpLastKeyFrame->mTimeStamp) >= 0.5)
         c3 = true;
-    } else if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) {
+    } else if (sensor_type == SensorType::IMU_STEREO ||
+               sensor_type == SensorType::IMU_RGB_D) {
       if ((mCurrentFrame.mTimeStamp - mpLastKeyFrame->mTimeStamp) >= 0.5)
         c3 = true;
     }
@@ -2963,11 +2942,12 @@ bool Tracking::NeedNewKeyFrame() {
   bool c4 = false;
   if ((((mnMatchesInliers < 75) && (mnMatchesInliers > 15)) ||
        mState == RECENTLY_LOST) &&
-      (mSensor == System::IMU_MONOCULAR)) // MODIFICATION_2, originally
-                                          // ((((mnMatchesInliers<75) &&
-                                          // (mnMatchesInliers>15)) ||
-                                          // mState==RECENTLY_LOST) && ((mSensor
-                                          // == System::IMU_MONOCULAR)))
+      (sensor_type ==
+       SensorType::IMU_MONOCULAR)) // MODIFICATION_2, originally
+                                   // ((((mnMatchesInliers<75) &&
+                                   // (mnMatchesInliers>15)) ||
+                                   // mState==RECENTLY_LOST) && ((sensor_type
+                                   // == SensorType::IMU_MONOCULAR)))
     c4 = true;
   else
     c4 = false;
@@ -2979,13 +2959,13 @@ bool Tracking::NeedNewKeyFrame() {
       return true;
     } else {
       mpLocalMapper->InterruptBA();
-      if (mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR) {
+      if ((sensor_type & SensorType::CAMERA_MASK) == SensorType::MONOCULAR) {
         if (mpLocalMapper->KeyframesInQueue() < 3)
           return true;
         else
           return false;
       } else {
-        // cout << "NeedNewKeyFrame: localmap is busy" << endl;
+        // cerr << "NeedNewKeyFrame: localmap is busy" << endl;
         return false;
       }
     }
@@ -3017,22 +2997,23 @@ void Tracking::CreateNewKeyFrame() {
     Verbose::Log("No last KF in KF creation!!", Verbose::VERBOSITY_NORMAL);
 
   // Reset preintegration from last KF (Create new object)
-  if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-      mSensor == System::IMU_RGBD) {
+  if (sensor_type & SensorType::USE_IMU) {
     mpImuPreintegratedFromLastKF =
         new IMU::Preintegrated(pKF->GetImuBias(), pKF->mImuCalib);
   }
 
-  if (mSensor != System::MONOCULAR &&
-      mSensor != System::IMU_MONOCULAR) // TODO check if incluide imu_stereo
+  if (sensor_type != SensorType::MONOCULAR &&
+      sensor_type !=
+          SensorType::IMU_MONOCULAR) // TODO check if incluide imu_stereo
   {
     mCurrentFrame.UpdatePoseMatrices();
-    // cout << "create new MPs" << endl;
+    // cerr << "create new MPs" << endl;
     // We sort points by the measured depth by the stereo/RGBD sensor.
     // We create all those MapPoints whose depth < mThDepth.
     // If there are less than 100 close points we create the 100 closest.
     int maxPoint = 100;
-    if (mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
+    if (sensor_type == SensorType::IMU_STEREO ||
+        sensor_type == SensorType::IMU_RGB_D)
       maxPoint = 100;
 
     vector<pair<float, int>> vDepthIdx;
@@ -3159,7 +3140,8 @@ void Tracking::SearchLocalPoints() {
   if (nToMatch > 0) {
     ORBmatcher matcher(0.8);
     int th = 1;
-    if (mSensor == System::RGBD || mSensor == System::IMU_RGBD)
+    if (sensor_type == SensorType::RGB_D ||
+        sensor_type == SensorType::IMU_RGB_D)
       th = 3;
     if (mpAtlas->isImuInitialized()) {
       if (mpAtlas->GetCurrentMap()->GetIniertialBA2())
@@ -3167,8 +3149,7 @@ void Tracking::SearchLocalPoints() {
       else
         th = 6;
     } else if (!mpAtlas->isImuInitialized() &&
-               (mSensor == System::IMU_MONOCULAR ||
-                mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)) {
+               (sensor_type & SensorType::USE_IMU)) {
       th = 10;
     }
 
@@ -3225,145 +3206,103 @@ void Tracking::UpdateLocalPoints() {
   }
 }
 
+#define SKIP_NULL(ptr)                                                         \
+  if ((ptr) == nullptr)                                                        \
+    continue;
+
 void Tracking::UpdateLocalKeyFrames() {
   // Each map point vote for the keyframes in which it has been observed
-  map<KeyFrame *, int> keyframeCounter;
+  Frame *frame = nullptr;
+  map<KeyFrame *, int> key_frame_counter;
   if (!mpAtlas->isImuInitialized() ||
-      (mCurrentFrame.mnId < mnLastRelocFrameId + 2)) {
-    for (int i = 0; i < mCurrentFrame.N; i++) {
-      MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
-      if (pMP) {
-        if (!pMP->isBad()) {
-          const map<KeyFrame *, tuple<int, int>> observations =
-              pMP->GetObservations();
-          for (map<KeyFrame *, tuple<int, int>>::const_iterator
-                   it = observations.begin(),
-                   itend = observations.end();
-               it != itend; it++)
-            keyframeCounter[it->first]++;
-        } else {
-          mCurrentFrame.mvpMapPoints[i] = NULL;
-        }
-      }
-    }
-  } else {
-    for (int i = 0; i < mLastFrame.N; i++) {
-      // Using lastframe since current frame has not matches yet
-      if (mLastFrame.mvpMapPoints[i]) {
-        MapPoint *pMP = mLastFrame.mvpMapPoints[i];
-        if (!pMP)
-          continue;
-        if (!pMP->isBad()) {
-          const map<KeyFrame *, tuple<int, int>> observations =
-              pMP->GetObservations();
-          for (map<KeyFrame *, tuple<int, int>>::const_iterator
-                   it = observations.begin(),
-                   itend = observations.end();
-               it != itend; it++)
-            keyframeCounter[it->first]++;
-        } else {
-          // MODIFICATION
-          mLastFrame.mvpMapPoints[i] = NULL;
-        }
-      }
+      (mCurrentFrame.mnId < mnLastRelocFrameId + 2))
+    frame = &mCurrentFrame;
+  else
+    frame = &mLastFrame;
+
+  for (auto &map_point : frame->mvpMapPoints) {
+    if (map_point != nullptr && !map_point->isBad()) {
+      const auto observations = map_point->GetObservations();
+      for (const auto ob : observations)
+        key_frame_counter[ob.first]++;
+    } else {
+      map_point = nullptr;
     }
   }
 
-  int max = 0;
-  KeyFrame *pKFmax = static_cast<KeyFrame *>(NULL);
-
   mvpLocalKeyFrames.clear();
-  mvpLocalKeyFrames.reserve(3 * keyframeCounter.size());
+  mvpLocalKeyFrames.reserve(3 * key_frame_counter.size());
 
-  // All keyframes that observe a map point are included in the local map. Also
-  // check which keyframe shares most points
-  for (map<KeyFrame *, int>::const_iterator it = keyframeCounter.begin(),
-                                            itEnd = keyframeCounter.end();
-       it != itEnd; it++) {
-    KeyFrame *pKF = it->first;
-
-    if (pKF->isBad())
-      continue;
-
-    if (it->second > max) {
-      max = it->second;
-      pKFmax = pKF;
-    }
-
-    mvpLocalKeyFrames.push_back(pKF);
-    pKF->mnTrackReferenceForFrame = mCurrentFrame.mnId;
+  // All keyframes that observe a map point are included in the local map.
+  // Also check which keyframe shares most points (best keyframe).
+  KeyFrame *best_key_frame = static_cast<KeyFrame *>(nullptr);
+  for (const auto &it : key_frame_counter) {
+    auto &key_frame = *it.first;
+    auto &count = it.second;
+    SKIP_NULL(&key_frame);
+    if (best_key_frame == nullptr || count > key_frame_counter[best_key_frame])
+      best_key_frame = &key_frame;
+    mvpLocalKeyFrames.push_back(&key_frame);
+    key_frame.mnTrackReferenceForFrame = mCurrentFrame.mnId;
   }
 
   // Include also some not-already-included keyframes that are neighbors to
   // already-included keyframes
-  for (vector<KeyFrame *>::const_iterator itKF = mvpLocalKeyFrames.begin(),
-                                          itEndKF = mvpLocalKeyFrames.end();
-       itKF != itEndKF; itKF++) {
+  for (auto &local_kf_ptr : mvpLocalKeyFrames) {
     // Limit the number of keyframes
     if (mvpLocalKeyFrames.size() > 80) // 80
       break;
+    if (local_kf_ptr == nullptr || local_kf_ptr->isBad())
+      continue;
+    auto &local_key_frame = *local_kf_ptr;
 
-    KeyFrame *pKF = *itKF;
-
-    const vector<KeyFrame *> vNeighs = pKF->GetBestCovisibilityKeyFrames(10);
-
-    for (vector<KeyFrame *>::const_iterator itNeighKF = vNeighs.begin(),
-                                            itEndNeighKF = vNeighs.end();
-         itNeighKF != itEndNeighKF; itNeighKF++) {
-      KeyFrame *pNeighKF = *itNeighKF;
-      if (!pNeighKF->isBad()) {
-        if (pNeighKF->mnTrackReferenceForFrame != mCurrentFrame.mnId) {
-          mvpLocalKeyFrames.push_back(pNeighKF);
-          pNeighKF->mnTrackReferenceForFrame = mCurrentFrame.mnId;
-          break;
-        }
-      }
-    }
-
-    const set<KeyFrame *> spChilds = pKF->GetChilds();
-    for (set<KeyFrame *>::const_iterator sit = spChilds.begin(),
-                                         send = spChilds.end();
-         sit != send; sit++) {
-      KeyFrame *pChildKF = *sit;
-      if (!pChildKF->isBad()) {
-        if (pChildKF->mnTrackReferenceForFrame != mCurrentFrame.mnId) {
-          mvpLocalKeyFrames.push_back(pChildKF);
-          pChildKF->mnTrackReferenceForFrame = mCurrentFrame.mnId;
-          break;
-        }
-      }
-    }
-
-    KeyFrame *pParent = pKF->GetParent();
-    if (pParent) {
-      if (pParent->mnTrackReferenceForFrame != mCurrentFrame.mnId) {
-        mvpLocalKeyFrames.push_back(pParent);
-        pParent->mnTrackReferenceForFrame = mCurrentFrame.mnId;
+    for (auto covis_kf_ptr : local_key_frame.GetBestCovisibilityKeyFrames(10)) {
+      SKIP_NULL(covis_kf_ptr);
+      auto &covis_key_frame = *covis_kf_ptr;
+      if (covis_key_frame.mnTrackReferenceForFrame != mCurrentFrame.mnId) {
+        mvpLocalKeyFrames.push_back(&covis_key_frame);
+        covis_key_frame.mnTrackReferenceForFrame = mCurrentFrame.mnId;
         break;
       }
+    }
+
+    for (auto &child_kf_ptr : local_key_frame.GetChilds()) {
+      SKIP_NULL(child_kf_ptr);
+      auto &child = *child_kf_ptr;
+      if (child.mnTrackReferenceForFrame != mCurrentFrame.mnId) {
+        mvpLocalKeyFrames.push_back(&child);
+        child.mnTrackReferenceForFrame = mCurrentFrame.mnId;
+        break;
+      }
+    }
+
+    auto &parent_frame = *local_key_frame.GetParent();
+    SKIP_NULL(&parent_frame);
+    if (parent_frame.mnTrackReferenceForFrame != mCurrentFrame.mnId) {
+      mvpLocalKeyFrames.push_back(&parent_frame);
+      parent_frame.mnTrackReferenceForFrame = mCurrentFrame.mnId;
+      break;
     }
   }
 
   // Add 10 last temporal KFs (mainly for IMU)
-  if ((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO ||
-       mSensor == System::IMU_RGBD) &&
-      mvpLocalKeyFrames.size() < 80) {
-    KeyFrame *tempKeyFrame = mCurrentFrame.mpLastKeyFrame;
+  if ((sensor_type & SensorType::USE_IMU) && mvpLocalKeyFrames.size() < 80) {
+    auto temporal_keyframe = mCurrentFrame.mpLastKeyFrame;
 
     const int Nd = 20;
     for (int i = 0; i < Nd; i++) {
-      if (!tempKeyFrame)
+      if (temporal_keyframe == nullptr || temporal_keyframe->isBad())
         break;
-      if (tempKeyFrame->mnTrackReferenceForFrame != mCurrentFrame.mnId) {
-        mvpLocalKeyFrames.push_back(tempKeyFrame);
-        tempKeyFrame->mnTrackReferenceForFrame = mCurrentFrame.mnId;
-        tempKeyFrame = tempKeyFrame->mPrevKF;
+      if (temporal_keyframe->mnTrackReferenceForFrame != mCurrentFrame.mnId) {
+        mvpLocalKeyFrames.push_back(temporal_keyframe);
+        temporal_keyframe->mnTrackReferenceForFrame = mCurrentFrame.mnId;
+        temporal_keyframe = temporal_keyframe->mPrevKF;
       }
     }
   }
 
-  if (pKFmax) {
-    mpReferenceKF = pKFmax;
+  if (best_key_frame) {
+    mpReferenceKF = best_key_frame;
     mCurrentFrame.mpReferenceKF = mpReferenceKF;
   }
 }
@@ -3521,7 +3460,7 @@ bool Tracking::Relocalization() {
     return false;
   } else {
     mnLastRelocFrameId = mCurrentFrame.mnId;
-    cout << "Relocalized!!" << endl;
+    cerr << "Relocalized!!" << endl;
     return true;
   }
 }
@@ -3555,8 +3494,7 @@ void Tracking::Reset(bool bLocMap) {
   // Clear Map (this erase MapPoints and KeyFrames)
   mpAtlas->clearAtlas();
   mpAtlas->CreateNewMap();
-  if (mSensor == System::IMU_STEREO || mSensor == System::IMU_MONOCULAR ||
-      mSensor == System::IMU_RGBD)
+  if (sensor_type & SensorType::USE_IMU)
     mpAtlas->SetInertialSensor();
   mnInitialFrameId = 0;
 
@@ -3624,7 +3562,7 @@ void Tracking::ResetActiveMap(bool bLocMap) {
   list<bool> lbLost;
   // lbLost.reserve(mlbLost.size());
   unsigned int index = mnFirstFrameId;
-  cout << "mnFirstFrameId = " << mnFirstFrameId << endl;
+  cerr << "mnFirstFrameId = " << mnFirstFrameId << endl;
   for (Map *pMap : mpAtlas->GetAllMaps()) {
     if (pMap->GetAllKeyFrames().size() > 0) {
       if (index > pMap->GetLowerKFID())
@@ -3632,9 +3570,9 @@ void Tracking::ResetActiveMap(bool bLocMap) {
     }
   }
 
-  // cout << "First Frame id: " << index << endl;
+  // cerr << "First Frame id: " << index << endl;
   int num_lost = 0;
-  cout << "mnInitialFrameId = " << mnInitialFrameId << endl;
+  cerr << "mnInitialFrameId = " << mnInitialFrameId << endl;
 
   for (list<bool>::iterator ilbL = mlbLost.begin(); ilbL != mlbLost.end();
        ilbL++) {
@@ -3647,7 +3585,7 @@ void Tracking::ResetActiveMap(bool bLocMap) {
 
     index++;
   }
-  cout << num_lost << " Frames set to lost" << endl;
+  cerr << num_lost << " Frames set to lost" << endl;
 
   mlbLost = lbLost;
 
@@ -3824,7 +3762,7 @@ bool Tracking::Stop() {
   unique_lock<mutex> lock(mMutexStop);
   if (mbStopRequested && !mbNotStop) {
     mbStopped = true;
-    cout << "Tracking STOP" << endl;
+    cerr << "Tracking STOP" << endl;
     return true;
   }
 

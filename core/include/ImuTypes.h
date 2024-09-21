@@ -206,11 +206,11 @@ public:
   Bias GetUpdatedBias();
 
   void printMeasurements() const {
-    cout << "pint meas:\n";
+    cerr << "pint meas:\n";
     for (size_t i = 0; i < mvMeasurements.size(); i++) {
-      cout << "meas " << mvMeasurements[i].t << endl;
+      cerr << "meas " << mvMeasurements[i].t << endl;
     }
-    cout << "end pint meas:\n";
+    cerr << "end pint meas:\n";
   }
 
 public:

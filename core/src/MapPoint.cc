@@ -298,9 +298,9 @@ void MapPoint::Replace(MapPoint *pMP) {
 }
 
 bool MapPoint::isBad() {
-  unique_lock<mutex> lock1(mMutexFeatures, defer_lock);
-  unique_lock<mutex> lock2(mMutexPos, defer_lock);
-  lock(lock1, lock2);
+  // unique_lock<mutex> lock1(mMutexFeatures, defer_lock);
+  // unique_lock<mutex> lock2(mMutexPos, defer_lock);
+  // lock(lock1, lock2);
 
   return mbBad;
 }
@@ -527,14 +527,14 @@ int MapPoint::PredictScale(const float &currentDist, Frame *pF) {
 }
 
 void MapPoint::PrintObservations() {
-  cout << "MP_OBS: MP " << mnId << endl;
+  cerr << "MP_OBS: MP " << mnId << endl;
   for (map<KeyFrame *, tuple<int, int>>::iterator mit = mObservations.begin(),
                                                   mend = mObservations.end();
        mit != mend; mit++) {
     KeyFrame *pKFi = mit->first;
     tuple<int, int> indexes = mit->second;
     int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
-    cout << "--OBS in KF " << pKFi->mnId << " in map "
+    cerr << "--OBS in KF " << pKFi->mnId << " in map "
          << pKFi->GetMap()->GetId() << endl;
   }
 }
@@ -580,7 +580,7 @@ void MapPoint::PostLoad(map<long unsigned int, KeyFrame *> &mpKFid,
                         map<long unsigned int, MapPoint *> &mpMPid) {
   mpRefKF = mpKFid[mBackupRefKFId];
   if (!mpRefKF) {
-    cout << "ERROR: MP without KF reference " << mBackupRefKFId
+    cerr << "ERROR: MP without KF reference " << mBackupRefKFId
          << "; Num obs: " << nObs << endl;
   }
   mpReplaced = static_cast<MapPoint *>(NULL);

@@ -21,10 +21,11 @@
 
 #include "TwoViewReconstruction.h"
 
-#include "Converter.h"
+#include "Debug.h"
 #include "GeometricTools.h"
 #include "Random.h"
 
+#include <algorithm>
 #include <thread>
 
 using namespace std;
@@ -108,26 +109,27 @@ bool TwoViewReconstruction::Reconstruct(const vector<cv::KeyPoint> &vKeys1,
   threadH.join();
   threadF.join();
 
+  fprintf(stderr, "TwoViewReconstruction Score H=%.4f, F=%.4f\n", SH, SF);
   // Compute ratio of scores
   if (SH + SF == 0.f)
     return false;
   float RH = SH / (SH + SF);
-
   float minParallax = 1.0;
-
   // Try to reconstruct from homography or fundamental depending on the ratio
-  // (0.40-0.45)
-  if (RH > 0.50) // if(RH>0.40)
-  {
-    // cout << "Initialization from Homography" << endl;
-    return ReconstructH(vbMatchesInliersH, H, mK, T21, vP3D, vbTriangulated,
-                        minParallax, 50);
-  } else // if(pF_HF>0.6)
-  {
-    // cout << "Initialization from Fundamental" << endl;
-    return ReconstructF(vbMatchesInliersF, F, mK, T21, vP3D, vbTriangulated,
-                        minParallax, 50);
+  Hypothesis::PTR result;
+  if (RH > 0.50) {
+    result = ReconstructH(vbMatchesInliersH, H, mK, minParallax, 50);
+  } else {
+    result = ReconstructF(vbMatchesInliersF, F, mK, minParallax, 50);
   }
+
+  if (!result)
+    return false;
+
+  vP3D = result->points_3d;
+  vbTriangulated = result->good_points;
+  T21 = Sophus::SE3f(result->R, result->t);
+  return true;
 }
 
 void TwoViewReconstruction::FindHomography(vector<bool> &vbMatchesInliers,
@@ -473,108 +475,28 @@ float TwoViewReconstruction::CheckFundamental(const Eigen::Matrix3f &F21,
   return score;
 }
 
-bool TwoViewReconstruction::ReconstructF(
-    vector<bool> &vbMatchesInliers, Eigen::Matrix3f &F21, Eigen::Matrix3f &K,
-    Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated,
-    float minParallax, int minTriangulated) {
-  int N = 0;
-  for (size_t i = 0, iend = vbMatchesInliers.size(); i < iend; i++)
-    if (vbMatchesInliers[i])
-      N++;
-
+Hypothesis::PTR
+TwoViewReconstruction::ReconstructF(vector<bool> &vbMatchesInliers,
+                                    Eigen::Matrix3f &F21, Eigen::Matrix3f &K,
+                                    float minParallax, size_t minTriangulated) {
   // Compute Essential Matrix from Fundamental Matrix
   Eigen::Matrix3f E21 = K.transpose() * F21 * K;
-
   Eigen::Matrix3f R1, R2;
   Eigen::Vector3f t;
-
   // Recover the 4 motion hypotheses
   DecomposeE(E21, R1, R2, t);
-
-  Eigen::Vector3f t1 = t;
+  Eigen::Vector3f &t1 = t;
   Eigen::Vector3f t2 = -t;
-
-  // Reconstruct with the 4 hyphoteses and check
-  vector<cv::Point3f> vP3D1, vP3D2, vP3D3, vP3D4;
-  vector<bool> vbTriangulated1, vbTriangulated2, vbTriangulated3,
-      vbTriangulated4;
-  float parallax1, parallax2, parallax3, parallax4;
-
-  int nGood1 = CheckRT(R1, t1, mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers,
-                       K, vP3D1, 4.0 * mSigma2, vbTriangulated1, parallax1);
-  int nGood2 = CheckRT(R2, t1, mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers,
-                       K, vP3D2, 4.0 * mSigma2, vbTriangulated2, parallax2);
-  int nGood3 = CheckRT(R1, t2, mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers,
-                       K, vP3D3, 4.0 * mSigma2, vbTriangulated3, parallax3);
-  int nGood4 = CheckRT(R2, t2, mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers,
-                       K, vP3D4, 4.0 * mSigma2, vbTriangulated4, parallax4);
-
-  int maxGood = max(nGood1, max(nGood2, max(nGood3, nGood4)));
-
-  int nMinGood = max(static_cast<int>(0.9 * N), minTriangulated);
-
-  int nsimilar = 0;
-  if (nGood1 > 0.7 * maxGood)
-    nsimilar++;
-  if (nGood2 > 0.7 * maxGood)
-    nsimilar++;
-  if (nGood3 > 0.7 * maxGood)
-    nsimilar++;
-  if (nGood4 > 0.7 * maxGood)
-    nsimilar++;
-
-  // If there is not a clear winner or not enough triangulated points reject
-  // initialization
-  if (maxGood < nMinGood || nsimilar > 1) {
-    return false;
-  }
-
-  // If best reconstruction has enough parallax initialize
-  if (maxGood == nGood1) {
-    if (parallax1 > minParallax) {
-      vP3D = vP3D1;
-      vbTriangulated = vbTriangulated1;
-
-      T21 = Sophus::SE3f(R1, t1);
-      return true;
-    }
-  } else if (maxGood == nGood2) {
-    if (parallax2 > minParallax) {
-      vP3D = vP3D2;
-      vbTriangulated = vbTriangulated2;
-
-      T21 = Sophus::SE3f(R2, t1);
-      return true;
-    }
-  } else if (maxGood == nGood3) {
-    if (parallax3 > minParallax) {
-      vP3D = vP3D3;
-      vbTriangulated = vbTriangulated3;
-
-      T21 = Sophus::SE3f(R1, t2);
-      return true;
-    }
-  } else if (maxGood == nGood4) {
-    if (parallax4 > minParallax) {
-      vP3D = vP3D4;
-      vbTriangulated = vbTriangulated4;
-
-      T21 = Sophus::SE3f(R2, t2);
-      return true;
-    }
-  }
-
-  return false;
+  Hypotheses hypotheses(*this,
+                        {Hypothesis::ptr(R1, t1), Hypothesis::ptr(R2, t1),
+                         Hypothesis::ptr(R1, t2), Hypothesis::ptr(R2, t2)});
+  return hypotheses.check(vbMatchesInliers, K, minParallax, minTriangulated);
 }
 
-bool TwoViewReconstruction::ReconstructH(
-    vector<bool> &vbMatchesInliers, Eigen::Matrix3f &H21, Eigen::Matrix3f &K,
-    Sophus::SE3f &T21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated,
-    float minParallax, int minTriangulated) {
-  int N = 0;
-  for (size_t i = 0, iend = vbMatchesInliers.size(); i < iend; i++)
-    if (vbMatchesInliers[i])
-      N++;
+Hypothesis::PTR
+TwoViewReconstruction::ReconstructH(vector<bool> &vbMatchesInliers,
+                                    Eigen::Matrix3f &H21, Eigen::Matrix3f &K,
+                                    float minParallax, size_t minTriangulated) {
 
   // We recover 8 motion hypotheses using the method of Faugeras et al.
   // Motion and structure from motion in a piecewise planar environment.
@@ -597,14 +519,15 @@ bool TwoViewReconstruction::ReconstructH(
   float d3 = w(2);
 
   if (d1 / d2 < 1.00001 || d2 / d3 < 1.00001) {
-    return false;
+    fprintf(stderr,
+            "[ReconstructionHomography] Rejected: bad singular values "
+            "[%.04f, %.04f, %.04f]\n",
+            d1, d2, d3);
+    return nullptr;
   }
 
-  vector<Eigen::Matrix3f> vR;
-  vector<Eigen::Vector3f> vt, vn;
-  vR.reserve(8);
-  vt.reserve(8);
-  vn.reserve(8);
+  Hypotheses hypotheses(*this);
+  hypotheses.reserve(8);
 
   // n'=[x1 0 x3] 4 posibilities e1=e3=1, e1=1 e3=-1, e1=-1 e3=1, e1=e3=-1
   float aux1 = sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
@@ -615,46 +538,26 @@ bool TwoViewReconstruction::ReconstructH(
   // case d'=d2
   float aux_stheta =
       sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / ((d1 + d3) * d2);
-
   float ctheta = (d2 * d2 + d1 * d3) / ((d1 + d3) * d2);
   float stheta[] = {aux_stheta, -aux_stheta, -aux_stheta, aux_stheta};
 
   for (int i = 0; i < 4; i++) {
-    Eigen::Matrix3f Rp;
-    Rp.setZero();
+    Eigen::Matrix3f Rp = Eigen::Matrix3f::Zero();
     Rp(0, 0) = ctheta;
     Rp(0, 2) = -stheta[i];
     Rp(1, 1) = 1.f;
     Rp(2, 0) = stheta[i];
     Rp(2, 2) = ctheta;
-
     Eigen::Matrix3f R = s * U * Rp * Vt;
-    vR.push_back(R);
-
-    Eigen::Vector3f tp;
-    tp(0) = x1[i];
-    tp(1) = 0;
-    tp(2) = -x3[i];
+    Eigen::Vector3f tp(x1[i], 0, -x3[i]);
     tp *= d1 - d3;
-
     Eigen::Vector3f t = U * tp;
-    vt.push_back(t / t.norm());
-
-    Eigen::Vector3f np;
-    np(0) = x1[i];
-    np(1) = 0;
-    np(2) = x3[i];
-
-    Eigen::Vector3f n = V * np;
-    if (n(2) < 0)
-      n = -n;
-    vn.push_back(n);
+    t /= t.norm();
+    hypotheses.push_back(Hypothesis::ptr(R, t));
   }
-
   // case d'=-d2
   float aux_sphi =
       sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / ((d1 - d3) * d2);
-
   float cphi = (d1 * d3 - d2 * d2) / ((d1 - d3) * d2);
   float sphi[] = {aux_sphi, -aux_sphi, -aux_sphi, aux_sphi};
 
@@ -668,67 +571,17 @@ bool TwoViewReconstruction::ReconstructH(
     Rp(2, 2) = -cphi;
 
     Eigen::Matrix3f R = s * U * Rp * Vt;
-    vR.push_back(R);
-
     Eigen::Vector3f tp;
     tp(0) = x1[i];
     tp(1) = 0;
     tp(2) = x3[i];
     tp *= d1 + d3;
-
     Eigen::Vector3f t = U * tp;
-    vt.push_back(t / t.norm());
-
-    Eigen::Vector3f np;
-    np(0) = x1[i];
-    np(1) = 0;
-    np(2) = x3[i];
-
-    Eigen::Vector3f n = V * np;
-    if (n(2) < 0)
-      n = -n;
-    vn.push_back(n);
+    t /= t.norm();
+    hypotheses.push_back(Hypothesis::ptr(R, t));
   }
 
-  int bestGood = 0;
-  int secondBestGood = 0;
-  int bestSolutionIdx = -1;
-  float bestParallax = -1;
-  vector<cv::Point3f> bestP3D;
-  vector<bool> bestTriangulated;
-
-  // Instead of applying the visibility constraints proposed in the Faugeras'
-  // paper (which could fail for points seen with low parallax) We reconstruct
-  // all hypotheses and check in terms of triangulated points and parallax
-  for (size_t i = 0; i < 8; i++) {
-    float parallaxi;
-    vector<cv::Point3f> vP3Di;
-    vector<bool> vbTriangulatedi;
-    int nGood =
-        CheckRT(vR[i], vt[i], mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers,
-                K, vP3Di, 4.0 * mSigma2, vbTriangulatedi, parallaxi);
-
-    if (nGood > bestGood) {
-      secondBestGood = bestGood;
-      bestGood = nGood;
-      bestSolutionIdx = i;
-      bestParallax = parallaxi;
-      bestP3D = vP3Di;
-      bestTriangulated = vbTriangulatedi;
-    } else if (nGood > secondBestGood) {
-      secondBestGood = nGood;
-    }
-  }
-
-  if (secondBestGood < 0.75 * bestGood && bestParallax >= minParallax &&
-      bestGood > minTriangulated && bestGood > 0.9 * N) {
-    T21 = Sophus::SE3f(vR[bestSolutionIdx], vt[bestSolutionIdx]);
-    vbTriangulated = bestTriangulated;
-
-    return true;
-  }
-
-  return false;
+  return hypotheses.check(vbMatchesInliers, K, minParallax, minTriangulated);
 }
 
 void TwoViewReconstruction::Normalize(const vector<cv::KeyPoint> &vKeys,
@@ -778,124 +631,6 @@ void TwoViewReconstruction::Normalize(const vector<cv::KeyPoint> &vKeys,
   T(2, 2) = 1.f;
 }
 
-int TwoViewReconstruction::CheckRT(
-    const Eigen::Matrix3f &R, const Eigen::Vector3f &t,
-    const vector<cv::KeyPoint> &vKeys1, const vector<cv::KeyPoint> &vKeys2,
-    const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
-    const Eigen::Matrix3f &K, vector<cv::Point3f> &vP3D, float th2,
-    vector<bool> &vbGood, float &parallax) {
-  // Calibration parameters
-  const float fx = K(0, 0);
-  const float fy = K(1, 1);
-  const float cx = K(0, 2);
-  const float cy = K(1, 2);
-
-  vbGood = vector<bool>(vKeys1.size(), false);
-  vP3D.resize(vKeys1.size());
-
-  vector<float> vCosParallax;
-  vCosParallax.reserve(vKeys1.size());
-
-  // Camera 1 Projection Matrix K[I|0]
-  Eigen::Matrix<float, 3, 4> P1;
-  P1.setZero();
-  P1.block<3, 3>(0, 0) = K;
-
-  Eigen::Vector3f O1;
-  O1.setZero();
-
-  // Camera 2 Projection Matrix K[R|t]
-  Eigen::Matrix<float, 3, 4> P2;
-  P2.block<3, 3>(0, 0) = R;
-  P2.block<3, 1>(0, 3) = t;
-  P2 = K * P2;
-
-  Eigen::Vector3f O2 = -R.transpose() * t;
-
-  int nGood = 0;
-
-  for (size_t i = 0, iend = vMatches12.size(); i < iend; i++) {
-    if (!vbMatchesInliers[i])
-      continue;
-
-    const cv::KeyPoint &kp1 = vKeys1[vMatches12[i].first];
-    const cv::KeyPoint &kp2 = vKeys2[vMatches12[i].second];
-
-    Eigen::Vector3f p3dC1;
-    Eigen::Vector3f x_p1(kp1.pt.x, kp1.pt.y, 1);
-    Eigen::Vector3f x_p2(kp2.pt.x, kp2.pt.y, 1);
-
-    GeometricTools::Triangulate(x_p1, x_p2, P1, P2, p3dC1);
-
-    if (!isfinite(p3dC1(0)) || !isfinite(p3dC1(1)) || !isfinite(p3dC1(2))) {
-      vbGood[vMatches12[i].first] = false;
-      continue;
-    }
-
-    // Check parallax
-    Eigen::Vector3f normal1 = p3dC1 - O1;
-    float dist1 = normal1.norm();
-
-    Eigen::Vector3f normal2 = p3dC1 - O2;
-    float dist2 = normal2.norm();
-
-    float cosParallax = normal1.dot(normal2) / (dist1 * dist2);
-
-    // Check depth in front of first camera (only if enough parallax, as
-    // "infinite" points can easily go to negative depth)
-    if (p3dC1(2) <= 0 && cosParallax < 0.99998)
-      continue;
-
-    // Check depth in front of second camera (only if enough parallax, as
-    // "infinite" points can easily go to negative depth)
-    Eigen::Vector3f p3dC2 = R * p3dC1 + t;
-
-    if (p3dC2(2) <= 0 && cosParallax < 0.99998)
-      continue;
-
-    // Check reprojection error in first image
-    float im1x, im1y;
-    float invZ1 = 1.0 / p3dC1(2);
-    im1x = fx * p3dC1(0) * invZ1 + cx;
-    im1y = fy * p3dC1(1) * invZ1 + cy;
-
-    float squareError1 = (im1x - kp1.pt.x) * (im1x - kp1.pt.x) +
-                         (im1y - kp1.pt.y) * (im1y - kp1.pt.y);
-
-    if (squareError1 > th2)
-      continue;
-
-    // Check reprojection error in second image
-    float im2x, im2y;
-    float invZ2 = 1.0 / p3dC2(2);
-    im2x = fx * p3dC2(0) * invZ2 + cx;
-    im2y = fy * p3dC2(1) * invZ2 + cy;
-
-    float squareError2 = (im2x - kp2.pt.x) * (im2x - kp2.pt.x) +
-                         (im2y - kp2.pt.y) * (im2y - kp2.pt.y);
-
-    if (squareError2 > th2)
-      continue;
-
-    vCosParallax.push_back(cosParallax);
-    vP3D[vMatches12[i].first] = cv::Point3f(p3dC1(0), p3dC1(1), p3dC1(2));
-    nGood++;
-
-    if (cosParallax < 0.99998)
-      vbGood[vMatches12[i].first] = true;
-  }
-
-  if (nGood > 0) {
-    sort(vCosParallax.begin(), vCosParallax.end());
-
-    size_t idx = min(50, int(vCosParallax.size() - 1));
-    parallax = acos(vCosParallax[idx]) * 180 / CV_PI;
-  } else
-    parallax = 0;
-
-  return nGood;
-}
-
 void TwoViewReconstruction::DecomposeE(const Eigen::Matrix3f &E,
                                        Eigen::Matrix3f &R1, Eigen::Matrix3f &R2,
                                        Eigen::Vector3f &t) {
@@ -922,6 +657,178 @@ void TwoViewReconstruction::DecomposeE(const Eigen::Matrix3f &E,
   R2 = U * W.transpose() * Vt;
   if (R2.determinant() < 0)
     R2 = -R2;
+}
+
+Hypothesis::PTR Hypothesis::ptr(Eigen::Matrix3f R, Eigen::Vector3f t) {
+  return std::make_shared<Hypothesis>(R, t);
+}
+
+Hypothesis::Hypothesis(Eigen::Matrix3f R, Eigen::Vector3f t) : R(R), t(t) {}
+
+void Hypothesis::CheckRT(const TwoViewReconstruction &tvr,
+                         const vector<bool> &vbMatchesInliers,
+                         const Eigen::Matrix3f &K, const float th2) {
+  // Calibration parameters
+  const float fx = K(0, 0);
+  const float fy = K(1, 1);
+  const float cx = K(0, 2);
+  const float cy = K(1, 2);
+
+  points_3d.resize(tvr.mvKeys1.size());
+  good_points = vector<bool>(tvr.mvKeys1.size(), false);
+
+  vector<float> vCosParallax;
+  vCosParallax.reserve(tvr.mvKeys1.size());
+
+  // Camera 1 Projection Matrix K[I|0]
+  Eigen::Matrix<float, 3, 4> P1;
+  P1.setZero();
+  P1.block<3, 3>(0, 0) = K;
+
+  Eigen::Vector3f O1;
+  O1.setZero();
+
+  // Camera 2 Projection Matrix K[R|t]
+  Eigen::Matrix<float, 3, 4> P2;
+  P2.block<3, 3>(0, 0) = R;
+  P2.block<3, 1>(0, 3) = t;
+  P2 = K * P2;
+  Eigen::Vector3f O2 = -R.transpose() * t;
+  for (size_t i = 0, iend = tvr.mvMatches12.size(); i < iend; i++) {
+    if (!vbMatchesInliers[i])
+      continue;
+    auto const &match = tvr.mvMatches12[i];
+    const cv::KeyPoint &kp1 = tvr.mvKeys1[match.first];
+    const cv::KeyPoint &kp2 = tvr.mvKeys2[match.second];
+
+    Eigen::Vector3f p3dC1;
+    Eigen::Vector3f x_p1(kp1.pt.x, kp1.pt.y, 1);
+    Eigen::Vector3f x_p2(kp2.pt.x, kp2.pt.y, 1);
+
+    GeometricTools::Triangulate(x_p1, x_p2, P1, P2, p3dC1);
+
+    if (!isfinite(p3dC1(0)) || !isfinite(p3dC1(1)) || !isfinite(p3dC1(2))) {
+      good_points[match.first] = false;
+      continue;
+    }
+
+    // Check parallax
+    Eigen::Vector3f normal1 = p3dC1 - O1;
+    float dist1 = normal1.norm();
+
+    Eigen::Vector3f normal2 = p3dC1 - O2;
+    float dist2 = normal2.norm();
+
+    float cosParallax = normal1.dot(normal2) / (dist1 * dist2);
+
+    // Check depth in front of first camera (only if enough parallax, as
+    // "infinite" points can easily go to negative depth)
+    if (p3dC1(2) <= 0 && cosParallax < 0.99998)
+      continue;
+
+    // Check depth in front of second camera (only if enough parallax, as
+    // "infinite" points can easily go to negative depth)
+    Eigen::Vector3f p3dC2 = R * p3dC1 + t;
+
+    if (p3dC2(2) <= 0 && cosParallax < 0.99998)
+      continue;
+
+    // Check re-projection error in first image
+    float im1x, im1y;
+    float invZ1 = 1.0 / p3dC1(2);
+    im1x = fx * p3dC1(0) * invZ1 + cx;
+    im1y = fy * p3dC1(1) * invZ1 + cy;
+
+    float squareError1 = (im1x - kp1.pt.x) * (im1x - kp1.pt.x) +
+                         (im1y - kp1.pt.y) * (im1y - kp1.pt.y);
+
+    if (squareError1 > th2)
+      continue;
+
+    // Check re-projection error in second image
+    float im2x, im2y;
+    float invZ2 = 1.0 / p3dC2(2);
+    im2x = fx * p3dC2(0) * invZ2 + cx;
+    im2y = fy * p3dC2(1) * invZ2 + cy;
+
+    float squareError2 = (im2x - kp2.pt.x) * (im2x - kp2.pt.x) +
+                         (im2y - kp2.pt.y) * (im2y - kp2.pt.y);
+
+    if (squareError2 > th2)
+      continue;
+
+    vCosParallax.push_back(cosParallax);
+    points_3d[match.first] = cv::Point3f(p3dC1(0), p3dC1(1), p3dC1(2));
+    nGood++;
+
+    if (cosParallax < 0.99998)
+      good_points[match.first] = true;
+  }
+
+  if (nGood > 0) {
+    sort(vCosParallax.begin(), vCosParallax.end());
+    // size_t idx = min(50, int(vCosParallax.size() - 1));
+    // parallax = acos(vCosParallax[idx]) * 180 / CV_PI;
+    parallax = acos(vCosParallax.back()) * 180 / CV_PI;
+  }
+}
+
+Hypotheses::Hypotheses(TwoViewReconstruction &tvr)
+    : vector<Hypothesis::PTR>(), tvr(tvr) {}
+
+Hypotheses::Hypotheses(TwoViewReconstruction &tvr,
+                       vector<Hypothesis::PTR> &&hypotheses)
+    : vector<Hypothesis::PTR>(hypotheses), tvr(tvr) {}
+
+Hypothesis::PTR Hypotheses::check(const vector<bool> &inliers,
+                                  const Eigen::Matrix3f &K,
+                                  const float minParallax,
+                                  const size_t minTriangulated) {
+  const float th2 = 4.0 * tvr.mSigma2;
+  Hypothesis::PTR best = nullptr;
+  for (auto &hp : *this) {
+    hp->CheckRT(tvr, inliers, K, th2);
+    if (best == nullptr || hp->nGood > best->nGood)
+      best = hp;
+  }
+  assert(best != nullptr); // Should never be nullptr
+
+  const size_t N = count(inliers.begin(), inliers.end(), true);
+  if (best->nGood < static_cast<size_t>(0.6 * N)) {
+    fprintf(stderr,
+            "[TVR::Hypotheses] Rejected: too much bad points "
+            "(%lu / %lu => %.02f%% Good)\n",
+            best->nGood, N, 100.0 * best->nGood / static_cast<float>(N));
+    return nullptr;
+  }
+
+  if (best->nGood < minTriangulated) {
+    fprintf(stderr,
+            "[TVR::Hypotheses] Rejected: too few good points (%lu < "
+            "%lu)\n",
+            best->nGood, minTriangulated);
+    return nullptr;
+  }
+
+  const auto similarity_threshold = static_cast<size_t>(0.9 * best->nGood);
+  for (const auto &other : *this) {
+    if (other == best)
+      continue;
+    if (other->nGood > similarity_threshold) {
+      cerr << "[TVR::Hypotheses] Rejected: no clear winner" << endl;
+      return nullptr;
+    }
+  }
+
+  if (best->parallax < minParallax) {
+    fprintf(stderr,
+            "[ReconstructionFundamental] Rejected: parallax too small (%.02f < "
+            "%.02f)\n",
+            best->parallax, minParallax);
+    return nullptr;
+  }
+
+  return best;
 }
 
 } // namespace ORB_SLAM3

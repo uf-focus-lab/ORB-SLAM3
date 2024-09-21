@@ -28,6 +28,7 @@ using namespace std;
 #include <opencv2/core/core.hpp>
 #include <vector>
 
+#include "Debug.h"
 #include "KeyFrame.h"
 #include "ORB/matcher.h"
 
@@ -350,8 +351,13 @@ void Sim3Solver::ComputeSim3(Eigen::Matrix3f &P1, Eigen::Matrix3f &P2) {
   // Rotation angle. sin is the norm of the imaginary part, cos is the real part
   double ang = atan2(vec.norm(), evec(0, maxIndex));
 
-  vec = 2 * ang * vec /
-        vec.norm(); // Angle-axis representation. quaternion angle is the half
+  const float norm = vec.norm();
+  // Angle-axis representation. quaternion angle is the half
+  vec = ang * vec / norm;
+  if (vec.hasNaN()) {
+    DEBUG_MSG("NaN detected");
+    return;
+  }
   mR12i = Sophus::SO3f::exp(vec).matrix();
 
   // Step 5: Rotate set 2
@@ -363,7 +369,7 @@ void Sim3Solver::ComputeSim3(Eigen::Matrix3f &P1, Eigen::Matrix3f &P2) {
     double cvnom = Converter::toCvMat(Pr1).dot(Converter::toCvMat(P3));
     double nom = (Pr1.array() * P3.array()).sum();
     if (abs(nom - cvnom) > 1e-3)
-      cout << "sim3 solver: " << abs(nom - cvnom) << endl << nom << endl;
+      cerr << "sim3 solver: " << abs(nom - cvnom) << endl << nom << endl;
     Eigen::Array<float, 3, 3> aux_P3;
     aux_P3 = P3.array() * P3.array();
     double den = aux_P3.sum();

@@ -23,13 +23,14 @@
 
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
-#include <unordered_set>
 
 #include <sophus/se3.hpp>
 
 using namespace std;
 
 namespace ORB_SLAM3 {
+
+class Hypothesis;
 
 class TwoViewReconstruction {
   typedef pair<int, int> Match;
@@ -48,7 +49,10 @@ public:
                    const vector<int> &vMatches12, Sophus::SE3f &T21,
                    vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated);
 
-private:
+  friend class Hypothesis;
+  friend class Hypotheses;
+
+protected:
   void FindHomography(vector<bool> &vbMatchesInliers, float &score,
                       Eigen::Matrix3f &H21);
   void FindFundamental(vector<bool> &vbInliers, float &score,
@@ -65,25 +69,18 @@ private:
   float CheckFundamental(const Eigen::Matrix3f &F21,
                          vector<bool> &vbMatchesInliers, float sigma);
 
-  bool ReconstructF(vector<bool> &vbMatchesInliers, Eigen::Matrix3f &F21,
-                    Eigen::Matrix3f &K, Sophus::SE3f &T21,
-                    vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated,
-                    float minParallax, int minTriangulated);
+  shared_ptr<Hypothesis> ReconstructF(vector<bool> &vbMatchesInliers,
+                                      Eigen::Matrix3f &F21, Eigen::Matrix3f &K,
+                                      float minParallax,
+                                      size_t minTriangulated);
 
-  bool ReconstructH(vector<bool> &vbMatchesInliers, Eigen::Matrix3f &H21,
-                    Eigen::Matrix3f &K, Sophus::SE3f &T21,
-                    vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated,
-                    float minParallax, int minTriangulated);
+  shared_ptr<Hypothesis> ReconstructH(vector<bool> &vbMatchesInliers,
+                                      Eigen::Matrix3f &H21, Eigen::Matrix3f &K,
+                                      float minParallax,
+                                      size_t minTriangulated);
 
   void Normalize(const vector<cv::KeyPoint> &vKeys,
                  vector<cv::Point2f> &vNormalizedPoints, Eigen::Matrix3f &T);
-
-  int CheckRT(const Eigen::Matrix3f &R, const Eigen::Vector3f &t,
-              const vector<cv::KeyPoint> &vKeys1,
-              const vector<cv::KeyPoint> &vKeys2,
-              const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
-              const Eigen::Matrix3f &K, vector<cv::Point3f> &vP3D, float th2,
-              vector<bool> &vbGood, float &parallax);
 
   void DecomposeE(const Eigen::Matrix3f &E, Eigen::Matrix3f &R1,
                   Eigen::Matrix3f &R2, Eigen::Vector3f &t);
@@ -109,6 +106,33 @@ private:
 
   // Ransac sets
   vector<vector<size_t>> mvSets;
+};
+
+class Hypothesis {
+public:
+  typedef shared_ptr<Hypothesis> PTR;
+  static PTR ptr(Eigen::Matrix3f R, Eigen::Vector3f t);
+  typedef pair<int, int> Match;
+  const Eigen::Matrix3f R;
+  const Eigen::Vector3f t;
+  vector<cv::Point3f> points_3d;
+  vector<bool> good_points;
+  size_t nGood = 0;
+  float parallax = 0;
+  Hypothesis(Eigen::Matrix3f R, Eigen::Vector3f t);
+  void CheckRT(const TwoViewReconstruction &tvr,
+               const vector<bool> &vbMatchesInliers, const Eigen::Matrix3f &K,
+               const float th2);
+};
+
+class Hypotheses : public vector<Hypothesis::PTR> {
+  TwoViewReconstruction &tvr;
+
+public:
+  Hypotheses(TwoViewReconstruction &tvr);
+  Hypotheses(TwoViewReconstruction &tvr, vector<Hypothesis::PTR> &&hypotheses);
+  Hypothesis::PTR check(const vector<bool> &inliers, const Eigen::Matrix3f &K,
+                        const float minParallax, const size_t minTriangulated);
 };
 
 } // namespace ORB_SLAM3

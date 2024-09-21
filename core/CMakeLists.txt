@@ -59,6 +59,7 @@ link_libraries(
 
 file(GLOB SOURCES src/*.cc src/**/*.cc)
 file(GLOB LIBSRCS lib/*.cc lib/**/*.cc)
+file(GLOB LIBINCS lib/*.h lib/**/*.h)
 file(GLOB HEADERS include/*.h include/**/*.h)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${LIBSRCS})

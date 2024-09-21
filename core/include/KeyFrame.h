@@ -538,7 +538,7 @@ public:
           right++;
       }
     }
-    cout << "Point distribution in KeyFrame: left-> " << left << " --- right-> "
+    cerr << "Point distribution in KeyFrame: left-> " << left << " --- right-> "
          << right << endl;
   }
 };

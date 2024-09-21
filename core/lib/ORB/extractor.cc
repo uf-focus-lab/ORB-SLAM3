@@ -1019,7 +1019,7 @@ int ORBextractor::operator()(InputArray _image, InputArray _mask,
                              vector<KeyPoint> &_keypoints,
                              OutputArray _descriptors,
                              vector<int> &vLappingArea) {
-  // cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
+  // cerr << "[ORBextractor]: Max Features: " << nfeatures << endl;
   if (_image.empty())
     return -1;
 
@@ -1095,7 +1095,7 @@ int ORBextractor::operator()(InputArray _image, InputArray _mask,
       i++;
     }
   }
-  // cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints"
+  // cerr << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints"
   // << endl;
   return monoIndex;
 }

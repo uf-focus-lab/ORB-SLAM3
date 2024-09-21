@@ -34,10 +34,11 @@ using namespace std;
 #include "LocalMapping.h"
 #include "LoopClosing.h"
 #include "MapDrawer.h"
-#include "ORB/vocabulary.h"
 #include "ORB/extractor.h"
-#include "Settings.h"
+#include "ORB/vocabulary.h"
 #include "ORB_SLAM3.h"
+#include "Settings.h"
+#include "System.h"
 #include "Viewer.h"
 
 #include "CameraModels/GeometricCamera.h"
@@ -61,7 +62,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
            MapDrawer *pMapDrawer, Atlas *pAtlas, KeyFrameDatabase *pKFDB,
-           const string &strSettingPath, const int sensor, Settings *settings,
+           const string &strSettingPath, const SensorType sensor, Settings *settings,
            const string &_nameSeq = string());
 
   ~Tracking();
@@ -148,7 +149,7 @@ public:
   stringstream ssStateMsg;
 
   // Input sensor
-  int mSensor;
+  SensorType sensor_type;
 
   // Current Frame
   Frame mCurrentFrame;
